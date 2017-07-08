@@ -131,6 +131,14 @@ public class BytesStreamingExtensionTestCase extends AbstractStreamingExtensionT
     assertThat(value, is(TOO_BIG));
   }
 
+  @Test
+  @Description("When the max buffer size is exceeded, the correct type of error is mapped, even for non blocking operations")
+  public void throwsBufferSizeExceededErrorWhenNonBlocking() throws Exception {
+    data = randomAlphabetic(KB.toBytes(60));
+    Object value = flowRunner("bufferExceededNonBlocking").withPayload(data).run().getMessage().getPayload().getValue();
+    assertThat(value, is(TOO_BIG));
+  }
+
   private void doSeek(String flowName) throws Exception {
     final int position = 10;
     Event result = flowRunner(flowName)

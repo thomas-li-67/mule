@@ -11,6 +11,7 @@ import static java.util.Optional.of;
 import static org.mule.runtime.api.util.Preconditions.checkArgument;
 import static org.mule.runtime.extension.api.annotation.param.Optional.PAYLOAD;
 import static org.mule.test.marvel.drstrange.DrStrangeErrorTypeDefinition.CUSTOM_ERROR;
+import org.mule.runtime.api.message.NullAttributes;
 import org.mule.runtime.api.streaming.bytes.CursorStream;
 import org.mule.runtime.core.api.util.IOUtils;
 import org.mule.runtime.extension.api.annotation.error.Throws;
@@ -18,6 +19,8 @@ import org.mule.runtime.extension.api.annotation.param.Config;
 import org.mule.runtime.extension.api.annotation.param.Connection;
 import org.mule.runtime.extension.api.annotation.param.Content;
 import org.mule.runtime.extension.api.annotation.param.Optional;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 import org.mule.runtime.extension.api.runtime.streaming.PagingProvider;
 
 import java.io.ByteArrayInputStream;
@@ -46,6 +49,17 @@ public class DrStrangeOperations {
       return IOUtils.toString(stream);
     } catch (Exception e) {
       throw new CustomErrorException(e, CUSTOM_ERROR);
+    }
+  }
+
+  @Throws(CustomErrorProvider.class)
+  public void readStreamNonBlocking(@Config DrStrange dr, @Optional(defaultValue = PAYLOAD) InputStream stream,
+                                    CompletionCallback<String, NullAttributes> callback)
+      throws IOException {
+    try {
+      callback.success(Result.<String, NullAttributes>builder().output(IOUtils.toString(stream)).build());
+    } catch (Exception e) {
+      callback.error(new CustomErrorException(e, CUSTOM_ERROR));
     }
   }
 
