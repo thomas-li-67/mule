@@ -223,7 +223,7 @@
         <muleDslApiVersion>1.0.0-FD-TEST-RELEASE</muleDslApiVersion>
         <muleExtensionsApiVersion>1.0.0-FD-TEST-RELEASE</muleExtensionsApiVersion>
         <muleHttpPolicyApiVersion>1.0.0-FD-TEST-RELEASE</muleHttpPolicyApiVersion>
-        <muleMavenClientApi>1.0.0-BETA.4</muleMavenClientApi>
+        <muleMavenClientApi>1.0.0-FD-TEST-RELEASE</muleMavenClientApi>
         <muleMavenClientImpl>1.0.0-BETA.4</muleMavenClientImpl>
         <mulePolicyApiVersion>1.0.0-FD-TEST-RELEASE</mulePolicyApiVersion>
         <muleApiVersion>1.0.0-FD-TEST-RELEASE</muleApiVersion>
