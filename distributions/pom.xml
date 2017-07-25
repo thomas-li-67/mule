@@ -28,7 +28,7 @@
 
         <muleSchedulerServiceVersion>1.0.0-BETA.4</muleSchedulerServiceVersion>
         <muleHttpServiceVersion>1.0.0--FD-TEST-RELEASE</muleHttpServiceVersion>
-        <muleOAuthServiceVersion>1.0.0-BETA.4</muleOAuthServiceVersion>
+        <muleOAuthServiceVersion>1.0.0--FD-TEST-RELEASE</muleOAuthServiceVersion>
         <muleSoapServiceVersion>1.0.0-BETA.4</muleSoapServiceVersion>
 	</properties>
 
