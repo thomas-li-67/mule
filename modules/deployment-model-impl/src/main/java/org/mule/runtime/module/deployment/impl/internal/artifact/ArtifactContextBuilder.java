@@ -346,6 +346,9 @@ public class ArtifactContextBuilder {
 
           @Override
           public void configure(MuleContext muleContext) throws ConfigurationException {
+            if (enableLazyInit) {
+              muleContext.getStatistics().setEnabled(false);
+            }
             if (serviceRepository != null) {
               serviceConfigurators.add(new ContainerServicesMuleContextConfigurator(serviceRepository));
             }
