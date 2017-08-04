@@ -6,8 +6,6 @@
  */
 package org.mule.runtime.config.spring;
 
-import static java.util.Optional.empty;
-import static java.util.Optional.of;
 import static org.mule.runtime.api.exception.ExceptionHelper.getRootException;
 import static org.mule.runtime.api.metadata.resolving.FailureCode.COMPONENT_NOT_FOUND;
 import static org.mule.runtime.api.metadata.resolving.MetadataFailure.Builder.newFailure;
@@ -23,7 +21,7 @@ import org.mule.runtime.api.metadata.descriptor.TypeMetadataDescriptor;
 import org.mule.runtime.api.metadata.resolving.MetadataResult;
 import org.mule.runtime.config.spring.dsl.model.NoSuchComponentModelException;
 
-import java.util.Optional;
+import java.util.concurrent.Callable;
 
 /**
  * {@link MetadataService} implementation that initialises the required components before doing test connectivity.
@@ -49,8 +47,7 @@ public class LazyMetadataService implements MetadataService {
    */
   @Override
   public MetadataResult<MetadataKeysContainer> getMetadataKeys(Location location) {
-    return (MetadataResult<MetadataKeysContainer>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getMetadataKeys(location));
+    return (MetadataResult<MetadataKeysContainer>) resolveMetadata(location, () -> metadataService.getMetadataKeys(location));
   }
 
   /**
@@ -58,8 +55,8 @@ public class LazyMetadataService implements MetadataService {
    */
   @Override
   public MetadataResult<ComponentMetadataDescriptor<OperationModel>> getOperationMetadata(Location location) {
-    return (MetadataResult<ComponentMetadataDescriptor<OperationModel>>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getOperationMetadata(location));
+    return (MetadataResult<ComponentMetadataDescriptor<OperationModel>>) resolveMetadata(location, () -> metadataService
+        .getOperationMetadata(location));
   }
 
   /**
@@ -68,8 +65,8 @@ public class LazyMetadataService implements MetadataService {
   @Override
   public MetadataResult<ComponentMetadataDescriptor<OperationModel>> getOperationMetadata(Location location,
                                                                                           MetadataKey key) {
-    return (MetadataResult<ComponentMetadataDescriptor<OperationModel>>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getOperationMetadata(location, key));
+    return (MetadataResult<ComponentMetadataDescriptor<OperationModel>>) resolveMetadata(location, () -> metadataService
+        .getOperationMetadata(location, key));
   }
 
   /**
@@ -77,8 +74,8 @@ public class LazyMetadataService implements MetadataService {
    */
   @Override
   public MetadataResult<ComponentMetadataDescriptor<SourceModel>> getSourceMetadata(Location location) {
-    return (MetadataResult<ComponentMetadataDescriptor<SourceModel>>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getSourceMetadata(location));
+    return (MetadataResult<ComponentMetadataDescriptor<SourceModel>>) resolveMetadata(location, () -> metadataService
+        .getSourceMetadata(location));
   }
 
   /**
@@ -86,8 +83,8 @@ public class LazyMetadataService implements MetadataService {
    */
   @Override
   public MetadataResult<ComponentMetadataDescriptor<SourceModel>> getSourceMetadata(Location location, MetadataKey key) {
-    return (MetadataResult<ComponentMetadataDescriptor<SourceModel>>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getSourceMetadata(location, key));
+    return (MetadataResult<ComponentMetadataDescriptor<SourceModel>>) resolveMetadata(location, () -> metadataService
+        .getSourceMetadata(location, key));
   }
 
   /**
@@ -103,8 +100,7 @@ public class LazyMetadataService implements MetadataService {
    */
   @Override
   public MetadataResult<MetadataKeysContainer> getEntityKeys(Location location) {
-    return (MetadataResult<MetadataKeysContainer>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getEntityKeys(location));
+    return (MetadataResult<MetadataKeysContainer>) resolveMetadata(location, () -> metadataService.getEntityKeys(location));
   }
 
   /**
@@ -112,19 +108,19 @@ public class LazyMetadataService implements MetadataService {
    */
   @Override
   public MetadataResult<TypeMetadataDescriptor> getEntityMetadata(Location location, MetadataKey key) {
-    return (MetadataResult<TypeMetadataDescriptor>) initializeComponent(location)
-        .orElseGet(() -> metadataService.getEntityMetadata(location, key));
+    return (MetadataResult<TypeMetadataDescriptor>) resolveMetadata(location,
+                                                                    () -> metadataService.getEntityMetadata(location, key));
   }
 
-  private Optional<MetadataResult<?>> initializeComponent(Location location) {
+  private MetadataResult<?> resolveMetadata(Location location, Callable<MetadataResult<?>> metadataResultCallable) {
     try {
-      lazyMuleArtifactContext.initializeComponent(location);
+      return lazyMuleArtifactContext.withContext(location, () -> metadataResultCallable.call(), Exception.class,
+                                                 exception -> failure(newFailure(exception).onComponent()));
     } catch (Exception e) {
       if (getRootException(e) instanceof NoSuchComponentModelException) {
-        return of(failure(newFailure(e).withFailureCode(COMPONENT_NOT_FOUND).onComponent()));
+        return failure(newFailure(e).withFailureCode(COMPONENT_NOT_FOUND).onComponent());
       }
-      return of(failure(newFailure(e).onComponent()));
+      return failure(newFailure(e).onComponent());
     }
-    return empty();
   }
 }

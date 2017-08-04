@@ -27,10 +27,8 @@ import static org.springframework.beans.factory.support.BeanDefinitionBuilder.ge
 import static org.springframework.context.annotation.AnnotationConfigUtils.AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME;
 import static org.springframework.context.annotation.AnnotationConfigUtils.CONFIGURATION_ANNOTATION_PROCESSOR_BEAN_NAME;
 import static org.springframework.context.annotation.AnnotationConfigUtils.REQUIRED_ANNOTATION_PROCESSOR_BEAN_NAME;
-
 import org.mule.runtime.api.app.declaration.ArtifactDeclaration;
 import org.mule.runtime.api.component.ComponentIdentifier;
-import org.mule.runtime.api.component.location.Location;
 import org.mule.runtime.api.dsl.DslResolvingContext;
 import org.mule.runtime.api.exception.MuleRuntimeException;
 import org.mule.runtime.api.meta.model.ExtensionModel;
@@ -38,7 +36,6 @@ import org.mule.runtime.api.metadata.MetadataService;
 import org.mule.runtime.config.spring.dsl.model.ApplicationModel;
 import org.mule.runtime.config.spring.dsl.model.ComponentBuildingDefinitionRegistry;
 import org.mule.runtime.config.spring.dsl.model.ComponentModel;
-import org.mule.runtime.config.spring.dsl.model.MinimalApplicationModelGenerator;
 import org.mule.runtime.config.spring.dsl.processor.ArtifactConfig;
 import org.mule.runtime.config.spring.dsl.processor.ConfigFile;
 import org.mule.runtime.config.spring.dsl.processor.ConfigLine;
@@ -59,11 +56,11 @@ import org.mule.runtime.core.api.extension.ExtensionManager;
 import org.mule.runtime.core.api.registry.ServiceRegistry;
 import org.mule.runtime.core.api.registry.TransformerResolver;
 import org.mule.runtime.core.api.transformer.Converter;
+import org.mule.runtime.core.api.util.IOUtils;
 import org.mule.runtime.core.config.ConfigResource;
 import org.mule.runtime.core.config.bootstrap.ArtifactType;
 import org.mule.runtime.core.registry.MuleRegistryHelper;
 import org.mule.runtime.core.registry.SpiServiceRegistry;
-import org.mule.runtime.core.api.util.IOUtils;
 import org.mule.runtime.dsl.api.component.ComponentBuildingDefinitionProvider;
 import org.mule.runtime.module.extension.internal.config.ExtensionBuildingDefinitionProvider;
 
@@ -505,13 +502,6 @@ public class MuleArtifactContext extends AbstractXmlApplicationContext {
 
   public static ThreadLocal<MuleContext> getCurrentMuleContext() {
     return currentMuleContext;
-  }
-
-  public void initializeComponent(Location location) {
-    MinimalApplicationModelGenerator minimalApplicationModelGenerator =
-        new MinimalApplicationModelGenerator(this.applicationModel, componentBuildingDefinitionRegistry);
-    ApplicationModel minimalApplicationModel = minimalApplicationModelGenerator.getMinimalModel(location);
-    createApplicationComponents((DefaultListableBeanFactory) this.getBeanFactory(), minimalApplicationModel, false);
   }
 
   public ConnectivityTestingService getConnectivityTestingService() {

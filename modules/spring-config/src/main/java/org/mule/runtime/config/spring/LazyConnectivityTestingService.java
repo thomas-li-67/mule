@@ -27,19 +27,21 @@ import java.util.List;
  */
 public class LazyConnectivityTestingService implements ConnectivityTestingService {
 
-  private final LazyComponentInitializer lazyComponentInitializer;
+  private final LazyComponentTaskExecutor lazyComponentTaskExecutor;
   private final ConnectivityTestingService connectivityTestingService;
 
-  public LazyConnectivityTestingService(LazyComponentInitializer lazyComponentInitializer,
+  public LazyConnectivityTestingService(LazyComponentTaskExecutor lazyComponentTaskExecutor,
                                         ConnectivityTestingService connectivityTestingService) {
-    this.lazyComponentInitializer = lazyComponentInitializer;
+    this.lazyComponentTaskExecutor = lazyComponentTaskExecutor;
     this.connectivityTestingService = connectivityTestingService;
   }
 
   @Override
   public ConnectionValidationResult testConnection(Location location) {
     try {
-      lazyComponentInitializer.initializeComponent(location);
+      return lazyComponentTaskExecutor
+          .withContext(location, () -> connectivityTestingService.testConnection(location), MuleRuntimeException.class,
+                       e -> unknownFailureResponse(e.getMessage(), e));
     } catch (MuleRuntimeException e) {
       if (e.getCause() instanceof NoSuchComponentModelException) {
         throw new ObjectNotFoundException(location.toString());
@@ -52,10 +54,9 @@ public class LazyConnectivityTestingService implements ConnectivityTestingServic
                                     (Exception) exception))
           .findFirst()
           .orElse(unknownFailureResponse(lastMessage(causalChain), e));
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       return unknownFailureResponse(e.getMessage(), e);
     }
-    return connectivityTestingService.testConnection(location);
   }
 
   private ConnectionValidationResult unknownFailureResponse(String message, Exception e) {
