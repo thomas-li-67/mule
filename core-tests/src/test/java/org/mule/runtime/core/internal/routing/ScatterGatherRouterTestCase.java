@@ -15,6 +15,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import static org.junit.rules.ExpectedException.none;
 import static org.mockito.Matchers.any;
@@ -149,7 +150,7 @@ public class ScatterGatherRouterTestCase extends AbstractMuleContextTestCase {
     assertThat(result.getMessage(), equalTo(original.getMessage()));
     final TypedValue<?> typedValue = result.getVariables().get(variableName);
     assertThat(typedValue.getValue(), instanceOf(Map.class));
-    assertThat(Map.class.isAssignableFrom(typedValue.getDataType().getType()), is(true));
+    assertThat(Map.class.isAssignableFrom(typedValue.getDataType().getType()), equalTo(true));
     Map<String, Message> resultMap = (Map<String, Message>) typedValue.getValue();
     assertThat(resultMap.values(), hasSize(2));
   }
@@ -181,6 +182,12 @@ public class ScatterGatherRouterTestCase extends AbstractMuleContextTestCase {
   public void defaultForkJoinStrategyFactory() throws Exception {
     assertThat(router.getDefaultForkJoinStrategyFactory(), instanceOf(CollectMapForkJoinStrategyFactory.class));
     assertThat(router.getDefaultForkJoinStrategyFactory().getResultDataType(), equalTo(MULE_MESSAGE_MAP));
+  }
+
+  @Test
+  @Description("Delay errors is always true for scatter-gather currently.")
+  public void defaultDelayErrors() throws Exception {
+    assertThat(router.isDelayErrors(), equalTo(true));
   }
 
   @Test

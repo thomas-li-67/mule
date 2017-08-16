@@ -7,6 +7,7 @@
 
 package org.mule.runtime.core.internal.routing;
 
+import static java.lang.Long.MAX_VALUE;
 import static org.mule.runtime.api.el.BindingContextUtils.getTargetBindingContext;
 import static org.mule.runtime.api.util.Preconditions.checkArgument;
 import static org.mule.runtime.core.api.InternalEvent.builder;
@@ -14,6 +15,12 @@ import static org.mule.runtime.core.api.construct.FlowConstruct.getFromAnnotated
 import static org.mule.runtime.core.api.exception.Errors.ComponentIdentifiers.TIMEOUT;
 import static org.mule.runtime.core.api.processor.MessageProcessors.processToApply;
 import static reactor.core.publisher.Flux.from;
+
+import java.util.function.Consumer;
+import java.util.function.Function;
+
+import javax.inject.Inject;
+
 import org.mule.runtime.api.component.location.ConfigurationComponentLocator;
 import org.mule.runtime.api.exception.MuleException;
 import org.mule.runtime.api.lifecycle.InitialisationException;
@@ -26,18 +33,15 @@ import org.mule.runtime.core.api.el.ExtendedExpressionManager;
 import org.mule.runtime.core.api.exception.MessagingException;
 import org.mule.runtime.core.api.processor.AbstractMuleObjectOwner;
 import org.mule.runtime.core.api.processor.MessageProcessorChain;
-import org.mule.runtime.core.api.processor.Router;
+import org.mule.runtime.core.api.processor.Processor;
 import org.mule.runtime.core.api.routing.CompositeRoutingException;
 import org.mule.runtime.core.api.routing.ForkJoinStrategy;
 import org.mule.runtime.core.api.routing.ForkJoinStrategy.RoutingPair;
 import org.mule.runtime.core.api.routing.ForkJoinStrategyFactory;
 import org.mule.runtime.core.api.scheduler.SchedulerService;
 
-import java.util.function.Consumer;
-
-import javax.inject.Inject;
-
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 /**
  * Abstract base class for routers using a {@link ForkJoinStrategy} to process multiple {@link RoutingPair}'s and aggregate
@@ -45,7 +49,7 @@ import org.reactivestreams.Publisher;
  * 
  * @since 4.0
  */
-public abstract class AbstractForkJoinRouter extends AbstractMuleObjectOwner<MessageProcessorChain> implements Router {
+public abstract class AbstractForkJoinRouter extends AbstractMuleObjectOwner<MessageProcessorChain> implements Processor {
 
   @Inject
   private SchedulerService schedulerService;
@@ -53,10 +57,10 @@ public abstract class AbstractForkJoinRouter extends AbstractMuleObjectOwner<Mes
   @Inject
   private ConfigurationComponentLocator componentLocator;
 
-  private FlowConstruct flowConstruct;
+  protected FlowConstruct flowConstruct;
   private ForkJoinStrategyFactory forkJoinStrategyFactory;
   private ForkJoinStrategy forkJoinStrategy;
-  private long timeout = Long.MAX_VALUE;
+  private long timeout = MAX_VALUE;
   private Integer maxConcurrency;
   private Scheduler timeoutScheduler;
   private ErrorType timeoutErrorType;
@@ -65,25 +69,37 @@ public abstract class AbstractForkJoinRouter extends AbstractMuleObjectOwner<Mes
   private String targetValue = "#[payload]";
 
   @Override
-  public InternalEvent process(InternalEvent event) throws MuleException {
+  public final InternalEvent process(InternalEvent event) throws MuleException {
     return processToApply(event, this);
   }
 
   @Override
-  public Publisher<InternalEvent> apply(Publisher<InternalEvent> publisher) {
+  public final Publisher<InternalEvent> apply(Publisher<InternalEvent> publisher) {
     return from(publisher)
         .doOnNext(onEvent())
-        .flatMap(event -> from(forkJoinStrategy.forkJoin(event, getRoutingPairs(event)))
+        .flatMap(originalEvent -> decorate(event -> from(forkJoinStrategy.forkJoin(event, getRoutingPairs(event))))
+            .apply(originalEvent)
             .map(result -> {
               if (target != null) {
                 TypedValue targetValue = getTargetValue(result);
-                return builder(event).addVariable(target, targetValue.getValue(), targetValue.getDataType()).build();
+                return builder(result).message(originalEvent.getMessage())
+                    .addVariable(target, targetValue.getValue(), targetValue.getDataType()).build();
               } else {
                 return result;
               }
             })
             .onErrorMap(throwable -> !(throwable instanceof MessagingException),
-                        throwable -> new MessagingException(event, throwable, this)));
+                        throwable -> new MessagingException(originalEvent, throwable, AbstractForkJoinRouter.this)));
+  }
+
+  /**
+   * Template method that allows implementations to decorate fork join strategy.
+   * 
+   * @param forkJoinFunction function to invoke and optional decorate
+   * @return decorated function
+   */
+  protected Function<InternalEvent, Flux<InternalEvent>> decorate(Function<InternalEvent, Flux<InternalEvent>> forkJoinFunction) {
+    return event -> forkJoinFunction.apply(event);
   }
 
   /**
@@ -107,8 +123,8 @@ public abstract class AbstractForkJoinRouter extends AbstractMuleObjectOwner<Mes
   @Override
   public void initialise() throws InitialisationException {
     super.initialise();
-    flowConstruct = getFromAnnotatedObject(componentLocator, this);
     expressionManager = muleContext.getExpressionManager();
+    flowConstruct = getFlowConstruct();
     timeoutScheduler = schedulerService.cpuLightScheduler();
     timeoutErrorType = muleContext.getErrorTypeRepository().getErrorType(TIMEOUT).get();
     maxConcurrency = maxConcurrency != null ? maxConcurrency : getDefaultMaxConcurrency();
@@ -117,6 +133,10 @@ public abstract class AbstractForkJoinRouter extends AbstractMuleObjectOwner<Mes
     forkJoinStrategy =
         forkJoinStrategyFactory.createForkJoinStrategy(flowConstruct.getProcessingStrategy(), maxConcurrency,
                                                        isDelayErrors(), timeout, timeoutScheduler, timeoutErrorType);
+  }
+
+  protected FlowConstruct getFlowConstruct() {
+    return getFromAnnotatedObject(componentLocator, this);
   }
 
   @Override

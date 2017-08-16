@@ -267,18 +267,20 @@ class MuleExtensionModelDeclarer {
         .describedAs("Property name used to store the number of message being iterated.");
 
     forEach.onDefaultParameterGroup()
-        .withOptionalParameter("ignoreErrorType")
-        .ofType(BaseTypeBuilder.create(JAVA).stringType().id(String.class.getName())
-            .enumOf("ANY", "REDELIVERY_EXHAUSTED", "TRANSFORMATION", "EXPRESSION", "SECURITY",
-                    "CLIENT_SECURITY", "SERVER_SECURITY", "ROUTING", "CONNECTIVITY", "RETRY_EXHAUSTED", "TIMEOUT")
-            .build())
+        .withOptionalParameter(TARGET_PARAMETER_NAME)
+        .ofType(typeLoader.load(String.class))
         .withExpressionSupport(NOT_SUPPORTED)
-        .withLayout(LayoutModel.builder().tabName("Advanced").build())
-        .withDisplayModel(DisplayModel.builder().displayName("Ignore Error Type").build())
-        .describedAs("A comma separated list of error types that should be handled, so that items that cause them when being "
-            + "processed are ignored, rather than propagating the error. "
-            + "This is useful to use validations inside this component.");
-
+        .describedAs(TARGET_PARAMETER_DESCRIPTION);
+    forEach.onDefaultParameterGroup()
+            .withOptionalParameter(TARGET_VALUE_PARAMETER_NAME)
+            .ofType(typeLoader.load(String.class))
+            .defaultingTo(PAYLOAD)
+            .withExpressionSupport(REQUIRED)
+            .describedAs(TARGET_VALUE_PARAMETER_DESCRIPTION)
+            .withRole(BEHAVIOUR)
+            .withDisplayModel(DisplayModel.builder().displayName(TARGET_VALUE_PARAMETER_DISPLAY_NAME).build())
+            .withLayout(LayoutModel.builder().tabName(ADVANCED_TAB).build())
+            .withModelProperty(new LiteralModelProperty());
   }
 
   private void declareChoice(ExtensionDeclarer extensionDeclarer, ClassTypeLoader typeLoader) {
@@ -397,7 +399,7 @@ class MuleExtensionModelDeclarer {
         .describedAs("Error handler used to propagate errors. It will rollback any transaction and not consume messages.");
     declareOnErrorRoute(typeLoader, onErrorPropagate);
 
-    //TODO MULE-13277 errorHandler.isOneRouteRequired(true);
+    // TODO MULE-13277 errorHandler.isOneRouteRequired(true);
   }
 
   private void declareOnErrorRoute(ClassTypeLoader typeLoader, NestedRouteDeclarer onError) {

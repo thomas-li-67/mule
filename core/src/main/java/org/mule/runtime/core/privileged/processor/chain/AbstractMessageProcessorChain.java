@@ -151,9 +151,9 @@ abstract class AbstractMessageProcessorChain extends AbstractAnnotatedObject imp
         .doOnError(MessagingException.class, errorNotification(processor)));
 
     // #6 If the processor returns a CursorProvider, then have the StreamingManager manage it
-    interceptors.add((processor, next) -> stream -> from(stream)
-        .transform(next)
-        .map(updateEventForStreaming(streamingManager)));
+    //interceptors.add((processor, next) -> stream -> from(stream)
+    //    .transform(next)
+    //    .map(updateEventForStreaming(streamingManager)));
 
     // #7 Apply processor interceptors.
     muleContext.getProcessorInterceptorManager().getInterceptorFactories().stream()

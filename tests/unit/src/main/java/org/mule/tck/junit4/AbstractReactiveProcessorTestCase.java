@@ -36,9 +36,10 @@ import reactor.core.publisher.Mono;
 
 /**
  * Abstract base test case extending {@link AbstractMuleContextTestCase} to be used when a {@link Processor} or {@link Flow} that
- * implements both {@link Processor#process(InternalEvent)} and {@link Processor#apply(Publisher)} needs paramatized tests so that both
- * approaches are tested with the same test method. Test cases that extend this abstract class should use (@link
- * {@link #process(Processor, InternalEvent)} to invoke {@link Processor}'s as part of the test, rather than invoking them directly.
+ * implements both {@link Processor#process(InternalEvent)} and {@link Processor#apply(Publisher)} needs paramatized tests so that
+ * both approaches are tested with the same test method. Test cases that extend this abstract class should use (@link
+ * {@link #process(Processor, InternalEvent)} to invoke {@link Processor}'s as part of the test, rather than invoking them
+ * directly.
  */
 @RunWith(Parameterized.class)
 public abstract class AbstractReactiveProcessorTestCase extends AbstractMuleContextTestCase {
@@ -98,10 +99,6 @@ public abstract class AbstractReactiveProcessorTestCase extends AbstractMuleCont
 
   @Override
   protected InternalEvent process(Processor processor, InternalEvent event) throws Exception {
-    return process(processor, event, true);
-  }
-
-  protected InternalEvent process(Processor processor, InternalEvent event, boolean unwrapMessagingException) throws Exception {
     setMuleContextIfNeeded(processor, muleContext);
     try {
       switch (mode) {
@@ -114,7 +111,7 @@ public abstract class AbstractReactiveProcessorTestCase extends AbstractMuleCont
       }
     } catch (Exception exception) {
       // Do not unwrap MessagingException thrown by use of apply() with Flow for compatibility with flow.process()
-      if (unwrapMessagingException && (!(processor instanceof Flow) && exception instanceof MessagingException)) {
+      if (!(processor instanceof Flow) && exception instanceof MessagingException) {
         throw messagingExceptionToException((MessagingException) exception);
       } else {
         throw exception;
