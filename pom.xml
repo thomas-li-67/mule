@@ -226,7 +226,7 @@
         <muleMavenClientApi>1.0.0-FD.3</muleMavenClientApi>
         <muleMavenClientImpl>1.0.0-FD.3</muleMavenClientImpl>
         <mulePolicyApiVersion>1.0.0-FD.3</mulePolicyApiVersion>
-        <muleApiVersion>1.0.0-FD.3</muleApiVersion>
+        <muleApiVersion>1.0.0-BETA.6</muleApiVersion>
         <muleMetadataModelVersion>1.0.0-FD.3</muleMetadataModelVersion>
         <metadataModelApiVersion>${muleMetadataModelVersion}</metadataModelApiVersion>
 
