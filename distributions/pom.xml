@@ -27,7 +27,7 @@
         <muleEmbeddedApiVersion>1.0.0-FD.3</muleEmbeddedApiVersion>
 
         <muleSchedulerServiceVersion>1.0.0-FD.3</muleSchedulerServiceVersion>
-        <muleHttpServiceVersion>1.0.0-FD.3</muleHttpServiceVersion>
+        <muleHttpServiceVersion>1.0.0-BETA.6</muleHttpServiceVersion>
         <muleOAuthServiceVersion>1.0.0-FD.3</muleOAuthServiceVersion>
         <muleSoapServiceVersion>1.0.0-FD.3</muleSoapServiceVersion>
 	</properties>
