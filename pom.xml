@@ -222,7 +222,7 @@
         <!-- Mule Snapshot Dependencies -->
         <muleDslApiVersion>1.0.0-BETA.6</muleDslApiVersion>
         <muleExtensionsApiVersion>1.0.0-BETA.6</muleExtensionsApiVersion>
-        <muleHttpPolicyApiVersion>1.0.0-FD.3</muleHttpPolicyApiVersion>
+        <muleHttpPolicyApiVersion>1.0.0-BETA.6</muleHttpPolicyApiVersion>
         <muleMavenClientApi>1.0.0-FD.3</muleMavenClientApi>
         <muleMavenClientImpl>1.0.0-FD.3</muleMavenClientImpl>
         <mulePolicyApiVersion>1.0.0-BETA.6</mulePolicyApiVersion>
