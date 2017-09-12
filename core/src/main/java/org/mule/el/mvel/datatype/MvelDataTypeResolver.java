@@ -78,8 +78,7 @@ public class MvelDataTypeResolver
 
         if (result == null)
         {
-            Class<?> type = value == null ? Object.class : value.getClass();
-            result =  DataTypeFactory.create(type, null);
+            result =  DataTypeFactory.create(value == null ? Object.class : value.getClass(), null);
         }
 
         return result;
