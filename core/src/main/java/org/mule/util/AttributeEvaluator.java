@@ -112,8 +112,7 @@ public class AttributeEvaluator
         }
         else
         {
-            Class<?> type = attributeValue == null ? Object.class : attributeValue.getClass();
-            return new TypedValue(attributeValue, DataTypeFactory.create(type, null));
+            return new TypedValue(attributeValue, DataTypeFactory.create(attributeValue == null ? Object.class : attributeValue.getClass(), null));
         }
     }
 
