@@ -4,7 +4,7 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.runtime.config.spring.internal;
+package org.mule.runtime.config.spring.api;
 
 import org.mule.runtime.api.component.location.Location;
 import org.mule.runtime.api.exception.MuleRuntimeException;
@@ -15,6 +15,8 @@ import org.mule.runtime.api.exception.MuleRuntimeException;
  * @since 4.0
  */
 public interface LazyComponentInitializer {
+
+  void initializeComponents(String configFile);
 
   /**
    * Calling this method guarantees that the requested component from the configuration will be created and

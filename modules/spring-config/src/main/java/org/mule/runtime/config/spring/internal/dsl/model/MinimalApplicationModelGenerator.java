@@ -10,12 +10,14 @@ package org.mule.runtime.config.spring.internal.dsl.model;
 import org.mule.runtime.api.component.location.Location;
 import org.mule.runtime.config.spring.api.dsl.model.ApplicationModel;
 import org.mule.runtime.config.spring.api.dsl.model.ComponentModel;
+import org.mule.runtime.dsl.api.component.config.DefaultComponentLocation;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Generates the minimal required component set to create a configuration component (i.e.: file:config, ftp:connection, a flow
@@ -42,6 +44,30 @@ public class MinimalApplicationModelGenerator {
    */
   public MinimalApplicationModelGenerator(ConfigurationDependencyResolver dependencyResolver) {
     this.dependencyResolver = dependencyResolver;
+  }
+
+  public ApplicationModel getMinimalModel(String configFile) {
+    List<ComponentModel> required = dependencyResolver.findRequiredComponentModels(configFile);
+    required.stream().forEach(componentModel -> {
+      final DefaultComponentLocation componentLocation = componentModel.getComponentLocation();
+      if (componentLocation != null) {
+        final String location = componentLocation.getLocation();
+        //TODO munit components has no location :S
+        if (!location.equals("null")) {
+          getMinimalModel(Location.builderFromStringRepresentation(location).build());
+        }
+      }
+    });
+
+    required.stream().filter(componentModel -> componentModel.getIdentifier().getName().equals("import"))
+        .forEach(componentModel -> getMinimalModel(componentModel.getParameters().get("file")));
+
+    // Hack due to some of the components are disabled when going up
+    required.stream().forEach(componentModel -> {
+      componentModel.setEnabled(true);
+      componentModel.executedOnEveryInnerComponent(component -> component.setEnabled(true));
+    });
+    return dependencyResolver.getApplicationModel();
   }
 
   /**

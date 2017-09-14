@@ -361,6 +361,13 @@ public class MuleContainer {
   }
 
   /**
+   * @return {@link ToolingService} of the runtime.
+   */
+  public ToolingService getToolingService() {
+    return toolingService;
+  }
+
+  /**
    * @return {@link ArtifactClassLoader} of the runtime.
    */
   public ArtifactClassLoader getContainerClassLoader() {

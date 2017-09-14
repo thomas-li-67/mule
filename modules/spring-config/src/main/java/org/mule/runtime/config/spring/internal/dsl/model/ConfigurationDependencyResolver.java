@@ -8,10 +8,8 @@ package org.mule.runtime.config.spring.internal.dsl.model;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.reverse;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
-import static java.util.stream.Collectors.toList;
 import static org.mule.runtime.api.i18n.I18nMessageFactory.createStaticMessage;
 import static org.mule.runtime.internal.dsl.DslConstants.CORE_PREFIX;
 import org.mule.runtime.api.component.ComponentIdentifier;
@@ -24,18 +22,16 @@ import org.mule.runtime.config.spring.api.dsl.processor.AbstractAttributeDefinit
 import org.mule.runtime.config.spring.internal.BeanDependencyResolver;
 import org.mule.runtime.dsl.api.component.KeyAttributeDefinitionPair;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ConfigurationDependencyResolver implements BeanDependencyResolver {
 
@@ -56,42 +52,6 @@ public class ConfigurationDependencyResolver implements BeanDependencyResolver {
                                          ComponentBuildingDefinitionRegistry componentBuildingDefinitionRegistry) {
     this.applicationModel = applicationModel;
     this.componentBuildingDefinitionRegistry = componentBuildingDefinitionRegistry;
-  }
-
-  /**
-   * @return a {@link List} of the component models by dependency references. For instance (A refs B), (B refs C) and D. The
-   *         resulting list would have the following order: D, A, B, C.
-   */
-  public List<ComponentModel> resolveComponentModelDependencies() {
-    LinkedHashMap<ComponentModel, List<ComponentModel>> componentModelDependencies = new LinkedHashMap<>();
-    applicationModel.executeOnEveryMuleComponentTree(componentModel -> {
-      if (componentModel.getNameAttribute() != null && componentModel.isEnabled()) {
-        List<ComponentModel> dependencies = resolveComponentModelDependencies(componentModel).stream()
-            .map(componentModelName -> applicationModel.findTopLevelNamedComponent(componentModelName).get()).collect(toList());
-        componentModelDependencies.put(componentModel, dependencies);
-      }
-    });
-
-    List<ComponentModel> used = new ArrayList<>();
-    List<ComponentModel> sorted = new ArrayList<>();
-    for (ComponentModel componentModel : componentModelDependencies.keySet()) {
-      if (!used.contains(componentModel)) {
-        resolveDependency(componentModelDependencies, used, sorted, componentModel);
-      }
-    }
-    reverse(sorted);
-    return sorted;
-  }
-
-  private void resolveDependency(Map<ComponentModel, List<ComponentModel>> allDependencies, List<ComponentModel> used,
-                                 List<ComponentModel> sortedComponentModel, ComponentModel componentModel) {
-    used.add(componentModel);
-    for (ComponentModel dependency : allDependencies.get(componentModel)) {
-      if (!used.contains(componentModel)) {
-        resolveDependency(allDependencies, used, sortedComponentModel, dependency);
-      }
-    }
-    sortedComponentModel.add(componentModel);
   }
 
   private Set<String> resolveComponentModelDependencies(ComponentModel componentModel) {
@@ -222,5 +182,15 @@ public class ConfigurationDependencyResolver implements BeanDependencyResolver {
   @Override
   public Collection<Object> resolveBeanDependencies(Set<String> beanNames) {
     return null;
+  }
+
+  public List<ComponentModel> findRequiredComponentModels(String configFile) {
+    List<ComponentModel> components = new ArrayList<>();
+    applicationModel.executeOnEveryComponentTree(componentModel -> {
+      if (componentModel.getConfigFileName().isPresent() && componentModel.getConfigFileName().get().equals(configFile)) {
+        components.add(componentModel);
+      }
+    });
+    return components;
   }
 }
