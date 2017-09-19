@@ -128,7 +128,7 @@
         <gmavenPluginVersion>1.4</gmavenPluginVersion>
         <javadocPluginVersion>2.9.1</javadocPluginVersion>
         <vmtype>org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType</vmtype>
-        <mavenCompilerVersion>3.1</mavenCompilerVersion>
+        <mavenCompilerVersion>3.7.0</mavenCompilerVersion>
 
         <!--
             The above project.url will not be picked up in the manifest,
