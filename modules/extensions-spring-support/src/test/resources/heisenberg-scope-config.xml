@@ -36,24 +36,46 @@
         <heisenberg:inline-barber-preferences beardTrimming="MUSTACHE"/>
     </heisenberg:config>
 
-    <!--TODO MULE-13440-->
-    <!--<flow name="killMany">-->
-    <!--<heisenberg:kill-many reason="${killingReason}">-->
-    <!--<heisenberg:kill-operations>-->
-    <!--<heisenberg:kill-with-custom-message victim="Gustavo Fring" goodbyeMessage="bye bye"/>-->
-    <!--<heisenberg:kill-with-custom-message victim="Frank" goodbyeMessage="bye bye"/>-->
-    <!--<heisenberg:kill-with-custom-message victim="Nazi dudes" goodbyeMessage="bye bye"/>-->
-    <!--</heisenberg:kill-operations>-->
-    <!--</heisenberg:kill-many>-->
-    <!--</flow>-->
+    <flow name="eachSuccess">
+        <heisenberg:handle-each handleSuccess="true">
+            <set-payload value="1"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="2"/>
+        </heisenberg:handle-each>
+        <set-variable variableName="2222222" value="2222222"/>
+    </flow>
 
-    <!--<flow name="killManyButOnlyOneProvided">-->
-    <!--<heisenberg:kill-many reason="${killingReason}">-->
-    <!--<heisenberg:kill-operations>-->
-    <!--<heisenberg:kill-with-custom-message victim="Gustavo Fring" goodbyeMessage="bye bye"/>-->
-    <!--</heisenberg:kill-operations>-->
-    <!--</heisenberg:kill-many>-->
-    <!--</flow>-->
+    <flow name="eachSuccessFailPropagate">
+        <heisenberg:handle-each handleSuccess="true">
+            <set-payload value="FAIL"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="2"/>
+        </heisenberg:handle-each>
+    </flow>
+
+    <flow name="eachSuccessFailResume">
+        <heisenberg:handle-each handleSuccess="true" handleError="true" onErrorResume="true">
+            <set-payload value="FAIL"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="FAIL"/>
+        </heisenberg:handle-each>
+    </flow>
+
+    <flow name="eachErrorResume">
+        <heisenberg:handle-each handleError="true" onErrorResume="true">
+            <set-payload value="#[invalidOne]"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="#[invalidTwo]"/>
+        </heisenberg:handle-each>
+    </flow>
+
+    <flow name="eachErrorPropagate">
+        <heisenberg:handle-each handleError="true">
+            <set-payload value="#[invalidOne]"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="#[invalidTwo]"/>
+        </heisenberg:handle-each>
+    </flow>
 
     <flow name="executeAnything">
         <heisenberg:execute-anything>

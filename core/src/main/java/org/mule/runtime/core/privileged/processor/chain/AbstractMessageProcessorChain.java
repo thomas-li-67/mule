@@ -39,6 +39,7 @@ import org.mule.runtime.core.api.processor.strategy.ProcessingStrategy;
 import org.mule.runtime.core.api.registry.RegistrationException;
 import org.mule.runtime.core.api.streaming.StreamingManager;
 import org.mule.runtime.core.api.util.MessagingExceptionResolver;
+import org.mule.runtime.core.internal.message.InternalEvent;
 import org.mule.runtime.core.internal.processor.interceptor.ReactiveInterceptorAdapter;
 import org.mule.runtime.core.privileged.component.AbstractExecutableComponent;
 import org.mule.runtime.core.privileged.event.PrivilegedEvent;
@@ -96,7 +97,8 @@ abstract class AbstractMessageProcessorChain extends AbstractExecutableComponent
     return stream;
   }
 
-  private ReactiveProcessor applyInterceptors(List<BiFunction<Processor, ReactiveProcessor, ReactiveProcessor>> interceptorsToBeExecuted,
+  private ReactiveProcessor applyInterceptors(
+                                              List<BiFunction<Processor, ReactiveProcessor, ReactiveProcessor>> interceptorsToBeExecuted,
                                               Processor processor) {
     ReactiveProcessor interceptorWrapperProcessorFunction = processor;
     // Take processor publisher function itself and transform it by applying interceptor transformations onto it.
@@ -107,8 +109,10 @@ abstract class AbstractMessageProcessorChain extends AbstractExecutableComponent
   }
 
   private List<BiFunction<Processor, ReactiveProcessor, ReactiveProcessor>> resolveInterceptors() {
-    List<BiFunction<Processor, ReactiveProcessor, ReactiveProcessor>> interceptors =
-        new ArrayList<>();
+    List<BiFunction<Processor, ReactiveProcessor, ReactiveProcessor>> interceptors = new ArrayList<>();
+
+    // #7 Apply processor interceptors.
+    interceptors.addAll(additionalInterceptors);
 
     // #1 Update MessagingException with failing processor if required, create Error and set error context.
     interceptors.add((processor, next) -> stream -> from(stream)
@@ -165,9 +169,30 @@ abstract class AbstractMessageProcessorChain extends AbstractExecutableComponent
         .transform(next)
         .map(updateEventForStreaming(streamingManager)));
 
-    // #7 Apply processor interceptors.
-    interceptors.addAll(0, additionalInterceptors);
-
+    // #7 Add custom interceptors for this execution.
+    interceptors.add((processor, next) -> stream -> from(stream)
+        .transform(next)
+        .cast(InternalEvent.class)
+        .map(event -> {
+          final ChainExecutorContext ctx = (ChainExecutorContext) event.getInternalParameters().get("ChainExecutorContext");
+          if (ctx != null) {
+            return ctx.getEachSuccessHandler().map(handler -> handler.apply(event)).orElse(event);
+          }
+          return event;
+        })
+        .cast(BaseEvent.class)
+        .onErrorResume(MessagingException.class, e -> {
+          InternalEvent event = (InternalEvent) e.getEvent();
+          ChainExecutorContext ctx = (ChainExecutorContext) event.getInternalParameters().get("ChainExecutorContext");
+          if (ctx != null && ctx.getEachErrorHandler().isPresent()) {
+            try {
+              return Mono.just(ctx.getEachErrorHandler().get().apply(e, event));
+            } catch (Throwable error) {
+              return Mono.error(error);
+            }
+          }
+          return Mono.error(e);
+        }));
 
     // #8 Handle errors that occur during Processor execution. This is done outside to any scheduling to ensure errors in
     // scheduling such as RejectedExecutionException's can be handled cleanly

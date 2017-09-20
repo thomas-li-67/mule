@@ -4,9 +4,10 @@
  * license, a copy of which has been included with this distribution in the
  * LICENSE.txt file.
  */
-package org.mule.runtime.module.extension.internal.runtime.operation;
+package org.mule.runtime.module.extension.api.runtime.privileged;
 
 import static java.util.Optional.ofNullable;
+import static org.mule.runtime.api.util.Preconditions.checkArgument;
 import org.mule.runtime.api.message.Message;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.api.metadata.TypedValue;
@@ -31,9 +32,16 @@ public final class EventedResult<T, A> extends Result<T, A> {
 
   private EventedResult(BaseEvent event) {
     this.event = event;
+    TypedValue<T> payload = event.getMessage().getPayload();
+    TypedValue<A> attributes = event.getMessage().getAttributes();
+    this.output = payload.getValue();
+    this.mediaType = payload.getDataType().getMediaType();
+    this.attributes = attributes.getValue();
+    this.attributesMediaType = attributes.getDataType().getMediaType();
   }
 
   public static <T, A> EventedResult<T, A> from(BaseEvent event) {
+    checkArgument(event != null, "Origin event for a new result cannot be null");
     return new EventedResult<>(event);
   }
 

@@ -6,21 +6,22 @@
  */
 package org.mule.test.module.extension;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.sameInstance;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.collection.IsIterableContainingInOrder.contains;
+import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.hamcrest.core.IsNot.not;
-import static org.junit.Assert.assertThat;
-
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.hamcrest.core.IsSame.sameInstance;
 import org.mule.runtime.api.connection.ConnectionException;
 import org.mule.runtime.core.api.event.BaseEvent;
 import org.mule.runtime.core.api.exception.MessagingException;
 import org.mule.runtime.core.api.util.ClassUtils;
-import org.mule.runtime.core.privileged.event.PrivilegedEvent;
 import org.mule.tck.junit4.rule.SystemProperty;
 
-import org.junit.Ignore;
+import java.util.List;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -98,23 +99,84 @@ public class ScopeExecutionTestCase extends AbstractExtensionFunctionalTestCase 
     runFlow("exceptionOnCallbacksFailure");
   }
 
-  @Test
-  @Ignore("MULE-13440")
-  public void manyNestedOperations() throws Exception {
-    BaseEvent event = runFlow("killMany");
-    String expected = "Killed the following because I'm the one who knocks:\n" + "bye bye, Gustavo Fring\n" + "bye bye, Frank\n"
-        + "bye bye, Nazi dudes\n";
+  /*
+  <flow name="eachSuccess">
+        <heisenberg:handle-each handleSuccess="true">
+            <set-payload value="1"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="2"/>
+        </heisenberg:handle-each>
+    </flow>
+  
+    <flow name="eachSuccessFailPropagate">
+        <heisenberg:handle-each handleSuccess="true">
+            <set-payload value="FAIL"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="2"/>
+        </heisenberg:handle-each>
+    </flow>
+  
+    <flow name="eachSuccessFailResume">
+        <heisenberg:handle-each handleSuccess="true" handleError="true" onErrorResume="true">
+            <set-payload value="FAIL"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="FAIL"/>
+        </heisenberg:handle-each>
+    </flow>
+  
+    <flow name="eachErrorResume">
+        <heisenberg:handle-each handleError="true" onErrorResume="true">
+            <set-payload value="#[invalidOne]"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="#[invalidTwo]"/>
+        </heisenberg:handle-each>
+    </flow>
+  
+    <flow name="eachErrorPropagate">
+        <heisenberg:handle-each handleError="true">
+            <set-payload value="#[invalidOne]"/>
+            <set-variable variableName="myVar" value="3"/>
+            <set-payload value="#[invalidTwo]"/>
+        </heisenberg:handle-each>
+    </flow>
+   */
 
-    assertThat(((PrivilegedEvent) event).getMessageAsString(muleContext), is(expected));
+  @Test
+  public void eachErrorResume() throws Exception {
+    BaseEvent event = flowRunner("eachErrorResume").run();
+    assertThat(event.getVariables().get("myVar").getValue(), is("3"));
+    assertThat((List<String>) event.getMessage().getPayload().getValue(),
+               contains("\"Script 'invalidOne ' has errors: \n\tUnable to resolve reference of invalidOne. at 1 : 1\" evaluating expression: \"invalidOne\".",
+                        "\"Script 'invalidTwo ' has errors: \n\tUnable to resolve reference of invalidTwo. at 1 : 1\" evaluating expression: \"invalidTwo\"."));
   }
 
   @Test
-  @Ignore("MULE-13440")
-  public void manyNestedOperationsSupportedButOnlyOneProvided() throws Exception {
-    BaseEvent event = runFlow("killManyButOnlyOneProvided");
-    String expected = "Killed the following because I'm the one who knocks:\n" + "bye bye, Gustavo Fring\n";
+  public void eachErrorPropagate() throws Exception {
+    BaseEvent event = flowRunner("eachErrorPropagate").run();
+    assertThat(event.getVariables().get("myVar"), is(nullValue()));
+    assertThat((List<String>) event.getMessage().getPayload().getValue(),
+               contains("\"Script 'invalidOne ' has errors: \n\tUnable to resolve reference of invalidOne. at 1 : 1\" evaluating expression: \"invalidOne\"."));
+  }
 
-    assertThat(expected, is(((PrivilegedEvent) event).getMessageAsString(muleContext)));
+  @Test
+  public void eachSuccess() throws Exception {
+    BaseEvent event = flowRunner("eachSuccess").run();
+    assertThat(event.getVariables().get("myVar").getValue(), is("3"));
+    assertThat((List<String>) event.getMessage().getPayload().getValue(), contains("1", "1", "2"));
+  }
+
+  @Test
+  public void eachSuccessFailResume() throws Exception {
+    BaseEvent event = flowRunner("eachSuccessFailResume").run();
+    assertThat(event.getVariables().get("myVar").getValue(), is("3"));
+    assertThat((List<String>) event.getMessage().getPayload().getValue(), contains("FAIL", "FAIL", "FAIL"));
+  }
+
+  @Test
+  public void eachSuccessFailPropagate() throws Exception {
+    BaseEvent event = flowRunner("eachSuccessFailPropagate").run();
+    assertThat(event.getVariables().get("myVar"), is(nullValue()));
+    assertThat((List<String>) event.getMessage().getPayload().getValue(), contains("FAIL"));
   }
 
   @Test

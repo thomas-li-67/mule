@@ -12,6 +12,7 @@ import static java.util.Optional.of;
 import static java.util.stream.Collectors.toMap;
 import static org.mule.runtime.api.el.BindingContextUtils.NULL_BINDING_CONTEXT;
 import static org.mule.runtime.api.el.BindingContextUtils.getTargetBindingContext;
+import static org.mule.runtime.core.internal.event.DefaultEventContext.child;
 import static org.mule.runtime.core.internal.message.InternalMessage.builder;
 import static org.mule.runtime.extension.api.ExtensionConstants.TARGET_PARAMETER_NAME;
 import static org.mule.runtime.extension.api.ExtensionConstants.TARGET_VALUE_PARAMETER_NAME;
@@ -31,16 +32,18 @@ import org.mule.runtime.api.metadata.TypedValue;
 import org.mule.runtime.api.util.Pair;
 import org.mule.runtime.core.api.el.ExpressionManager;
 import org.mule.runtime.core.api.event.BaseEvent;
-import org.mule.runtime.core.privileged.processor.chain.MessageProcessorChain;
+import org.mule.runtime.core.api.event.BaseEventContext;
 import org.mule.runtime.core.api.processor.Processor;
 import org.mule.runtime.core.privileged.processor.chain.DefaultMessageProcessorChainBuilder;
-import org.reactivestreams.Publisher;
+import org.mule.runtime.core.privileged.processor.chain.MessageProcessorChain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.reactivestreams.Publisher;
 
 /**
  * Creates a chain for any operation, where it parametrizes two type of values (parameter and property) to the inner processors
@@ -211,7 +214,7 @@ public class ModuleOperationMessageProcessorChainBuilder extends DefaultMessageP
     }
 
     private BaseEvent createEventWithParameters(BaseEvent event) {
-      BaseEvent.Builder builder = BaseEvent.builder(event.getContext());
+      BaseEvent.Builder builder = BaseEvent.builder(child(((BaseEventContext) event.getContext()), empty()));
       builder.message(builder().nullValue().build());
       builder.parameters(evaluateParameters(event, parameters));
       builder.properties(evaluateParameters(event, properties));

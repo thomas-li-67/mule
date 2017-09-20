@@ -14,7 +14,6 @@ import static org.mule.runtime.core.api.rx.Exceptions.rxExceptionToMuleException
 import static org.mule.runtime.core.internal.event.DefaultEventContext.child;
 import static reactor.core.publisher.Mono.from;
 import static reactor.core.publisher.Mono.just;
-
 import org.mule.runtime.api.component.location.ComponentLocation;
 import org.mule.runtime.api.event.EventContext;
 import org.mule.runtime.api.exception.MuleException;
@@ -30,12 +29,11 @@ import org.mule.runtime.core.api.processor.ReactiveProcessor;
 import org.mule.runtime.core.api.processor.strategy.ProcessingStrategy;
 import org.mule.runtime.core.privileged.processor.chain.DefaultMessageProcessorChainBuilder;
 
-import org.reactivestreams.Publisher;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**

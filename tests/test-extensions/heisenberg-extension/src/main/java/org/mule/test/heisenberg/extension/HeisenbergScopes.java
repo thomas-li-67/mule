@@ -9,16 +9,14 @@ package org.mule.test.heisenberg.extension;
 import org.mule.runtime.api.lifecycle.Initialisable;
 import org.mule.runtime.api.lifecycle.InitialisationException;
 import org.mule.runtime.extension.api.annotation.dsl.xml.ParameterDsl;
-import org.mule.runtime.extension.api.annotation.error.Throws;
 import org.mule.runtime.extension.api.annotation.metadata.OutputResolver;
 import org.mule.runtime.extension.api.annotation.param.Optional;
-import org.mule.runtime.extension.api.annotation.param.stereotype.AllowedStereotypes;
 import org.mule.runtime.extension.api.runtime.operation.Result;
-import org.mule.runtime.extension.api.runtime.route.Chain;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
-import org.mule.test.heisenberg.extension.stereotypes.DrugKillingStereotype;
-import org.mule.test.heisenberg.extension.stereotypes.KillingStereotype;
+import org.mule.runtime.extension.api.runtime.route.Chain;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class HeisenbergScopes implements Initialisable {
@@ -34,16 +32,50 @@ public class HeisenbergScopes implements Initialisable {
     return initialiasedCounter;
   }
 
-  @Throws(HeisenbergErrorTyperProvider.class)
-  public void killMany(@AllowedStereotypes({KillingStereotype.class, DrugKillingStereotype.class}) Chain killOperations,
-                       CompletionCallback<String, Void> callback, String reason)
-      throws Exception {
-    //TODO MULE-13440
-  }
-
   @OutputResolver(output = HeisenbergOutputResolver.class)
   public void getChain(Chain chain, CompletionCallback<Chain, Void> cb) {
     cb.success(Result.<Chain, Void>builder().output(chain).build());
+  }
+
+  @OutputResolver(output = HeisenbergOutputResolver.class)
+  public void handleEach(Chain operations,
+                         @Optional boolean handleSuccess,
+                         @Optional boolean handleError,
+                         @Optional boolean onErrorResume,
+                         CompletionCallback<List<String>, Void> cb) {
+    final List<String> results = new LinkedList<>();
+
+    if (handleSuccess) {
+      operations
+          .onEachSuccess(r -> {
+            String message = (String) r.getOutput();
+            if ("FAIL".equals(message)) {
+              throw new RuntimeException(message);
+            }
+            results.add(message);
+            return r;
+          });
+    }
+
+    if (handleError) {
+      operations
+          .onEachError((error, result) -> {
+            if (onErrorResume) {
+              results.add(error.getMessage());
+              return result;
+            }
+            throw error;
+          });
+    }
+
+    operations
+        .process(result -> {
+          cb.success(result.copy().output(results).build());
+                 },
+                 (error, result) -> {
+                   results.add(error.getMessage());
+                   cb.success(result.copy().output(results).build());
+                 });
   }
 
   public void executeAnything(Chain chain, CompletionCallback<Void, Void> cb) {

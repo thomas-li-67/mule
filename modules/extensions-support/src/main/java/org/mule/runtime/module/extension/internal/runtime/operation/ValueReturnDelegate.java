@@ -12,6 +12,7 @@ import org.mule.runtime.core.api.MuleContext;
 import org.mule.runtime.core.api.event.BaseEvent;
 import org.mule.runtime.core.api.streaming.CursorProviderFactory;
 import org.mule.runtime.module.extension.api.runtime.privileged.ExecutionContextAdapter;
+import org.mule.runtime.module.extension.api.runtime.privileged.EventedResult;
 
 /**
  * An implementation of {@link ReturnDelegate} which allows setting the response value into the {@link Message} that will continue
