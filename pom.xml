@@ -217,7 +217,7 @@
         <muleExtensionsApiVersion>1.0.0-rc-DRY-RUN</muleExtensionsApiVersion>
         <muleHttpPolicyApiVersion>1.0.0-rc-DRY-RUN</muleHttpPolicyApiVersion>
         <muleMavenClientApi>1.0.0-rc-DRY-RUN</muleMavenClientApi>
-        <muleMavenClientImpl>1.0.0-rc-SNAPSHOT</muleMavenClientImpl>
+        <muleMavenClientImpl>1.0.0-rc-DRY-RUN</muleMavenClientImpl>
         <muleMavenClientTest>1.0.0-rc-SNAPSHOT</muleMavenClientTest>
         <mulePolicyApiVersion>1.0.0-rc-DRY-RUN</mulePolicyApiVersion>
         <muleApiVersion>1.0.0-rc-DRY-RUN</muleApiVersion>
