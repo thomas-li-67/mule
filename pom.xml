@@ -219,7 +219,7 @@
         <muleMavenClientApi>1.0.0-rc-SNAPSHOT</muleMavenClientApi>
         <muleMavenClientImpl>1.0.0-rc-SNAPSHOT</muleMavenClientImpl>
         <muleMavenClientTest>1.0.0-rc-SNAPSHOT</muleMavenClientTest>
-        <mulePolicyApiVersion>1.0.0-rc-SNAPSHOT</mulePolicyApiVersion>
+        <mulePolicyApiVersion>1.0.0-rc-DRY-RUN</mulePolicyApiVersion>
         <muleApiVersion>1.0.0-rc-DRY-RUN</muleApiVersion>
         <muleMetadataModelVersion>1.0.0-rc-DRY-RUN</muleMetadataModelVersion>
         <metadataModelApiVersion>${muleMetadataModelVersion}</metadataModelApiVersion>
