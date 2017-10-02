@@ -179,9 +179,8 @@ abstract class AbstractMessageProcessorChain extends AbstractExecutableComponent
     // #7 Apply processor interceptors.
     interceptors.addAll(0, additionalInterceptors);
 
-
     // #8 Handle errors that occur during Processor execution. This is done outside to any scheduling to ensure errors in
-    // scheduling such as RejectedExecutionException's can be handled cleanly
+    // scheduling such as RejectedExecutionException's can be handled cleanly.
     interceptors.add((processor, next) -> stream -> from(stream).concatMap(event -> just(event)
         .transform(next)
         .doOnEach(signal -> currentMuleContext.set(null))
@@ -189,11 +188,15 @@ abstract class AbstractMessageProcessorChain extends AbstractExecutableComponent
                        throwable -> Mono.from(((BaseEventContext) event.getContext())
                            .error(resolveException((Component) processor, event, throwable)))
                            .then(Mono.empty()))
+        // If we already got a MessagingException, avoid wrapping it again
         .onErrorResume(MessagingException.class,
                        throwable -> {
                          throwable = resolveMessagingException(processor).apply(throwable);
                          return Mono.from(((BaseEventContext) event.getContext()).error(throwable)).then(Mono.empty());
-                       })));
+                       })
+        .onErrorResume(throwable -> Mono
+            .from(((BaseEventContext) event.getContext()).error(resolveException((Component) processor, event, throwable)))
+            .then(Mono.empty()))));
 
     return interceptors;
   }
