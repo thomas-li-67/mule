@@ -9,6 +9,8 @@ package org.mule.runtime.core.internal.metadata;
 import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.api.metadata.MediaType;
 
+import java.util.Objects;
+
 /**
  * A data type that simply wraps a Java type.
  * <p>
@@ -39,36 +41,6 @@ public class SimpleDataType implements DataType {
   public MediaType getMediaType() {
     return mimeType;
   }
-
-  @Override
-  public boolean isCompatibleWith(DataType dataType) {
-    if (this == dataType) {
-      return true;
-    }
-    if (dataType == null) {
-      return false;
-    }
-
-    SimpleDataType that = (SimpleDataType) dataType;
-
-    // ANY_MIME_TYPE will match to a null or non-null value for MediaType
-    if ((this.getMediaType() == null && that.getMediaType() != null || that.getMediaType() == null && this.getMediaType() != null)
-        && !MediaType.ANY.matches(this.mimeType) && !MediaType.ANY.matches(that.mimeType)) {
-      return false;
-    }
-
-    if (this.getMediaType() != null && !this.getMediaType().matches(that.getMediaType())
-        && !MediaType.ANY.matches(that.getMediaType()) && !MediaType.ANY.matches(this.getMediaType())) {
-      return false;
-    }
-
-    if (!fromPrimitive(this.getType()).isAssignableFrom(fromPrimitive(that.getType()))) {
-      return false;
-    }
-
-    return true;
-  }
-
 
   private Class<?> fromPrimitive(Class<?> type) {
     Class<?> primitiveWrapper = getPrimitiveWrapper(type);
@@ -111,30 +83,64 @@ public class SimpleDataType implements DataType {
 
     SimpleDataType that = (SimpleDataType) o;
 
-    if (!type.equals(that.type)) {
+    return Objects.equals(this.getType(), that.getType()) &&
+        Objects.equals(this.getMediaType(), that.getMediaType());
+  }
+
+  @Override
+  public boolean isCompatibleWith(DataType dataType) {
+    if (this == dataType) {
+      return true;
+    }
+    if (dataType == null) {
       return false;
     }
 
-    // TODO MULE-9987 Fix this
-    // ANY_MIME_TYPE will match to a null or non-null value for MediaType
-    if ((this.mimeType == null && that.mimeType != null || that.mimeType == null && this.mimeType != null)
-        && !MediaType.ANY.matches(that.mimeType)) {
+    SimpleDataType that = (SimpleDataType) dataType;
+
+    if (!fromPrimitive(this.getType()).isAssignableFrom(fromPrimitive(that.getType()))) {
       return false;
     }
 
-    if (this.mimeType != null && !mimeType.matches(that.mimeType) && !MediaType.ANY.matches(that.mimeType)) {
+    return mediaTypesMatch(dataType);
+  }
+
+  @Override
+  public boolean matches(DataType other) {
+
+    if (this.equals(other)) {
+      return true;
+    }
+
+    if (!this.getType().equals(other.getType())) {
       return false;
     }
 
-    return true;
+    return mediaTypesMatch(other);
+  }
+
+  private boolean mediaTypesMatch(DataType other) {
+
+    //ANY_MIME_TYPE should match with null also
+    if (MediaType.ANY.matches(this.getMediaType()) || MediaType.ANY.matches(other.getMediaType())) {
+      return true; //If any mediaType is ANY, they match
+    }
+
+    if (this.getMediaType() == null && other.getMediaType() != null) {
+      return false; //This mediaType is null and the other not null different from ANY
+    }
+
+    if (this.getMediaType() != null && other.getMediaType() == null) {
+      return false; //This mediaType is not null, different from ANY and the other is null.
+    }
+
+    return this.getMediaType().matches(other.getMediaType());
+
   }
 
   @Override
   public int hashCode() {
-    // TODO MULE-9987 Check if it is actually needed to leave the java type out.
-    int result = type.hashCode();
-    result = 31 * result + (mimeType != null ? mimeType.hashCode() : 0);
-    return result;
+    return Objects.hash(getType(), getMediaType());
   }
 
 

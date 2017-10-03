@@ -107,14 +107,14 @@ public class DataWeaveExpressionLanguageAdaptorTestCase extends AbstractWeaveExp
   public void stringExpression() throws Exception {
     TypedValue result = expressionLanguage.evaluate("\"hey\"", testEvent(), BindingContext.builder().build());
     assertThat(result.getValue(), is("hey"));
-    assertThat(result.getDataType(), is(equalTo(STRING)));
+    assertThat(DataType.match(result.getDataType(), STRING), is(true));
   }
 
   @Test
   public void withPrefixExpression() throws Exception {
     TypedValue result = expressionLanguage.evaluate("#[dw:\"hey\"]", testEvent(), BindingContext.builder().build());
     assertThat(result.getValue(), is("hey"));
-    assertThat(result.getDataType(), is(equalTo(STRING)));
+    assertThat(DataType.match(result.getDataType(), STRING), is(true));
   }
 
   @Test
@@ -386,7 +386,7 @@ public class DataWeaveExpressionLanguageAdaptorTestCase extends AbstractWeaveExp
 
     TypedValue result =
         expressionLanguage.evaluate("flow.name", event, fromSingleComponent(flowName), BindingContext.builder().build());
-    assertThat(result.getDataType(), is(STRING));
+    assertThat(DataType.match(result.getDataType(), STRING), is(true));
     assertThat(result.getValue(), is(flowName));
   }
 

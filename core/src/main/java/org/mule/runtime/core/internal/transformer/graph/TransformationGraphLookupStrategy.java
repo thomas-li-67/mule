@@ -15,7 +15,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.jgrapht.DirectedGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +25,9 @@ public class TransformationGraphLookupStrategy {
 
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  private DirectedGraph<DataType, TransformationEdge> graph;
+  private TransformationGraph graph;
 
-  public TransformationGraphLookupStrategy(DirectedGraph<DataType, TransformationEdge> graph) {
+  public TransformationGraphLookupStrategy(TransformationGraph graph) {
     this.graph = graph;
   }
 
@@ -41,18 +40,24 @@ public class TransformationGraphLookupStrategy {
    */
   public List<Converter> lookupConverters(DataType source, DataType target) {
     List<Converter> converters = new LinkedList<>();
-    if (!graph.containsVertex(source)) {
+    if (!graph.containsVertexOrMatching(source)) {
       return converters;
     }
 
     // Checks if there is a converter with the specified output data type
-    if (!graph.containsVertex(target)) {
+    if (!graph.containsVertexOrMatching(target)) {
       return converters;
     }
 
     Set<DataType> visited = new HashSet<>();
 
-    List<List<TransformationEdge>> transformationPaths = findTransformationPaths(source, target, visited);
+    //At this point we already know that both vertexes(or matching ones) are in the graph, so we can be sure that
+    //the optionals will not be empty
+
+    DataType sourceVertex = graph.getActualMatchingVertex(source).get();
+    DataType targetVertex = graph.getActualMatchingVertex(target).get();
+
+    List<List<TransformationEdge>> transformationPaths = findTransformationPaths(sourceVertex, targetVertex, visited);
 
     converters = createConverters(transformationPaths);
 
@@ -94,7 +99,7 @@ public class TransformationGraphLookupStrategy {
       for (TransformationEdge transformationEdge : transformationEdges) {
         DataType edgeTarget = graph.getEdgeTarget(transformationEdge);
 
-        if (edgeTarget.equals(target)) {
+        if (edgeTarget.isCompatibleWith(target)) {
           LinkedList<TransformationEdge> transformationEdges1 = new LinkedList<>();
           transformationEdges1.add(transformationEdge);
           validTransformationEdges.add(transformationEdges1);

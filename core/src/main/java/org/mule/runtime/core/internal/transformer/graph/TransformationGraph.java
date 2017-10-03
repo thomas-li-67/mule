@@ -10,6 +10,7 @@ import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.core.api.transformer.Converter;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import org.jgrapht.graph.DirectedMultigraph;
@@ -39,16 +40,18 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     }
 
     DataType returnDataType = converter.getReturnDataType();
-    if (!containsVertex(returnDataType)) {
+    if (!containsVertexOrMatching(returnDataType)) {
       addVertex(returnDataType);
     }
 
     for (DataType sourceDataType : converter.getSourceDataTypes()) {
-      if (!containsVertex(sourceDataType)) {
+      if (!containsVertexOrMatching(sourceDataType)) {
         addVertex(sourceDataType);
       }
 
-      addEdge(sourceDataType, returnDataType, new TransformationEdge(converter));
+      //Use the compatible vertexes since we don't want to add multiple paths to the same transformation
+      addEdge(getActualMatchingVertex(sourceDataType).get(), getActualMatchingVertex(returnDataType).get(),
+              new TransformationEdge(converter));
     }
 
     registeredConverters.add(converter);
@@ -66,7 +69,12 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     DataType returnDataType = converter.getReturnDataType();
 
     for (DataType sourceDataType : converter.getSourceDataTypes()) {
-      Set<TransformationEdge> allEdges = getAllEdges(sourceDataType, returnDataType);
+      Optional<DataType> actualSourceVertex = getActualMatchingVertex(sourceDataType);
+      Optional<DataType> actualReturnVertex = getActualMatchingVertex(returnDataType);
+      if (!actualSourceVertex.isPresent() || !actualReturnVertex.isPresent()) {
+        return;
+      }
+      Set<TransformationEdge> allEdges = getAllEdges(actualSourceVertex.get(), actualReturnVertex.get());
 
       for (TransformationEdge edge : allEdges) {
 
@@ -88,5 +96,18 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     }
 
     registeredConverters.remove(converter);
+  }
+
+  //Looks for the actual matching vertex inside the graph
+  public Optional<DataType> getActualMatchingVertex(DataType vertex) {
+    //Use the parent's method to check for the actual vertex
+    if (super.containsVertex(vertex)) {
+      return Optional.of(vertex);
+    }
+    return vertexSet().stream().filter((graphVertex) -> DataType.match(graphVertex, vertex)).findFirst();
+  }
+
+  public boolean containsVertexOrMatching(DataType vertex) {
+    return getActualMatchingVertex(vertex).isPresent();
   }
 }

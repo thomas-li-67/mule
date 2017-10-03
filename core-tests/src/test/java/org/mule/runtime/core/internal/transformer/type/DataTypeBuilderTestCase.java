@@ -206,7 +206,7 @@ public class DataTypeBuilderTestCase extends AbstractMuleTestCase {
 
     assertThat(dataType, instanceOf(DefaultCollectionDataType.class));
     assertThat(dataType.getType(), is(equalTo(List.class)));
-    assertThat(((DefaultCollectionDataType) dataType).getItemDataType(), is(STRING));
+    assertThat(DataType.match(((DefaultCollectionDataType) dataType).getItemDataType(), STRING), is(true));
     assertThat(((DefaultCollectionDataType) dataType).getItemDataType().getMediaType().getPrimaryType(), is("application"));
     assertThat(((DefaultCollectionDataType) dataType).getItemDataType().getMediaType().getSubType(), is("json"));
     assertThat(((DefaultCollectionDataType) dataType).getItemDataType().getMediaType().getCharset().get(), is(UTF_8));
@@ -243,11 +243,11 @@ public class DataTypeBuilderTestCase extends AbstractMuleTestCase {
 
     assertThat(dataType, instanceOf(DefaultMapDataType.class));
     assertThat(dataType.getType(), is(equalTo(HashMap.class)));
-    assertThat(((DefaultMapDataType) dataType).getKeyDataType(), is(STRING));
+    assertThat(DataType.match(((DefaultMapDataType) dataType).getKeyDataType(), STRING), is(true));
     assertThat(((DefaultMapDataType) dataType).getKeyDataType().getMediaType().getPrimaryType(), is("text"));
     assertThat(((DefaultMapDataType) dataType).getKeyDataType().getMediaType().getSubType(), is("plain"));
     assertThat(((DefaultMapDataType) dataType).getKeyDataType().getMediaType().getCharset().get(), is(UTF_8));
-    assertThat(((DefaultMapDataType) dataType).getValueDataType(), is(NUMBER));
+    assertThat(DataType.match(((DefaultMapDataType) dataType).getValueDataType(), NUMBER), is(true));
     assertThat(((DefaultMapDataType) dataType).getValueDataType().getMediaType().getPrimaryType(), is("application"));
     assertThat(((DefaultMapDataType) dataType).getValueDataType().getMediaType().getSubType(), is("json"));
     assertThat(((DefaultMapDataType) dataType).getValueDataType().getMediaType().getCharset().get(), is(ISO_8859_1));

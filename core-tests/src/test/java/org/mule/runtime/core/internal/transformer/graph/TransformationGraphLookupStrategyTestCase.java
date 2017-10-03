@@ -8,11 +8,10 @@ package org.mule.runtime.core.internal.transformer.graph;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
-import static org.mockito.Mockito.mock;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
 
 import org.mule.runtime.core.api.transformer.Converter;
-import org.mule.runtime.api.metadata.DataType;
-import org.mule.tck.junit4.AbstractMuleTestCase;
 import org.mule.tck.size.SmallTest;
 import org.mule.runtime.core.privileged.transformer.CompositeConverter;
 import org.mule.runtime.core.internal.transformer.builder.MockConverterBuilder;
@@ -23,15 +22,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 @SmallTest
-public class TransformationGraphLookupStrategyTestCase extends AbstractMuleTestCase {
+public class TransformationGraphLookupStrategyTestCase extends AbstractTransformationGraphTestCase {
 
-  private static final DataType XML_DATA_TYPE = mock(DataType.class, "XML_DATA_TYPE");
-  private static final DataType JSON_DATA_TYPE = mock(DataType.class, "JSON_DATA_TYPE");
-  private static final DataType INPUT_STREAM_DATA_TYPE = mock(DataType.class, "INPUT_STREAM_DATA_TYPE");
-  private static final DataType STRING_DATA_TYPE = mock(DataType.class, "STRING_DATA_TYPE");
 
   private TransformationGraph graph = new TransformationGraph();
   private TransformationGraphLookupStrategy lookupStrategyTransformation = new TransformationGraphLookupStrategy(graph);
+
 
   @Test
   public void lookupTransformersNoSourceInGraph() throws Exception {
@@ -115,6 +111,33 @@ public class TransformationGraphLookupStrategyTestCase extends AbstractMuleTestC
     assertContainsCompositeTransformer(converters, inputStreamToString, stringToXml);
     assertContainsCompositeTransformer(converters, inputStreamToJson, jsonToXml);
     assertContainsCompositeTransformer(converters, inputStreamToString, stringToJson, jsonToXml);
+  }
+
+  @Test
+  public void gettingConverterFromMatchingDataTypeShouldWork() throws Exception {
+    Converter utf8ToJson = new MockConverterBuilder().from(UTF_8_DATA_TYPE).to(JSON_DATA_TYPE).build();
+
+    graph.addConverter(utf8ToJson);
+
+    List<Converter> converters = lookupStrategyTransformation.lookupConverters(UTF_16_DATA_TYPE, JSON_DATA_TYPE);
+
+    assertThat(converters.size(), is(1));
+    assertThat(converters.contains(utf8ToJson), is(true));
+  }
+
+  @Test
+  public void convertersWithMatchingDataTypesAreAllReturned() throws Exception {
+    Converter utf8ToJson = new MockConverterBuilder().from(UTF_8_DATA_TYPE).to(JSON_DATA_TYPE).build();
+    Converter utf16ToJson = new MockConverterBuilder().from(UTF_16_DATA_TYPE).to(JSON_DATA_TYPE).build();
+
+    graph.addConverter(utf8ToJson);
+    graph.addConverter(utf16ToJson);
+
+    List<Converter> converters = lookupStrategyTransformation.lookupConverters(UTF_16_DATA_TYPE, JSON_DATA_TYPE);
+
+    assertThat(converters.size(), is(2));
+    assertThat(converters.contains(utf8ToJson), is(true));
+    assertThat(converters.contains(utf16ToJson), is(true));
   }
 
   private void assertContainsCompositeTransformer(List<Converter> converters, Converter... composedConverters) {
