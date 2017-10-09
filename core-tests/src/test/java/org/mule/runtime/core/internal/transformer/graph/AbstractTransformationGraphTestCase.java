@@ -6,17 +6,17 @@
  */
 package org.mule.runtime.core.internal.transformer.graph;
 
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.tck.junit4.AbstractMuleTestCase;
 
-import java.nio.charset.Charset;
-
 
 public class AbstractTransformationGraphTestCase extends AbstractMuleTestCase {
 
-  private static final MediaType UTF_8_MEDIA_TYPE = MediaType.create("media", "type", Charset.forName("UTF-8"));
-  private static final MediaType UTF_16_MEDIA_TYPE = MediaType.create("media", "type", Charset.forName("UTF-16"));
+  private static final MediaType UTF_8_MEDIA_TYPE = MediaType.create("media", "type", UTF_8);
+  private static final MediaType UTF_16_MEDIA_TYPE = MediaType.create("media", "type", UTF_16);
 
 
   protected static final DataType XML_DATA_TYPE = DataType.builder().type(XML_CLASS.class).build();

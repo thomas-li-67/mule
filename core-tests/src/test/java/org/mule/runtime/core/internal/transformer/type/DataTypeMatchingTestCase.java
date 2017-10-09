@@ -6,10 +6,15 @@
  */
 package org.mule.runtime.core.internal.transformer.type;
 
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.mule.runtime.api.metadata.DataType.builder;
+import static org.mule.runtime.api.metadata.DataType.match;
+import static org.mule.runtime.api.metadata.MediaType.create;
 import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.tck.junit4.AbstractMuleTestCase;
@@ -24,17 +29,17 @@ public class DataTypeMatchingTestCase extends AbstractMuleTestCase {
   private static final MediaType TEXT_MEDIA_TYPE = MediaType.TEXT;
   private static final MediaType FOO_MEDIA_TYPE = MediaType.create("foo", "foo");
 
-  private static final DataType GENERIC_DATA_TYPE = DataType.builder().type(Object.class).mediaType(STAR_STAR_MEDIA_TYPE).build();
+  private static final DataType GENERIC_DATA_TYPE = builder().type(Object.class).mediaType(STAR_STAR_MEDIA_TYPE).build();
   private static final DataType GENERIC_TYPE_GENERIC_DATA_TYPE =
-      DataType.builder().type(Object.class).mediaType(FOO_MEDIA_TYPE).build();
+      builder().type(Object.class).mediaType(FOO_MEDIA_TYPE).build();
   private static final DataType GENERIC_MEDIA_TYPE_GENERIC_DATA_TYPE =
-      DataType.builder().type(FOO.class).mediaType(STAR_STAR_MEDIA_TYPE).build();
+      builder().type(FOO.class).mediaType(STAR_STAR_MEDIA_TYPE).build();
 
   private static final DataType JSON_PARENT_DATA_TYPE =
-      DataType.builder().type(JSON_PARENT.class).mediaType(APPLICATION_JSON_MEDIA_TYPE).build();
+      builder().type(JSON_PARENT.class).mediaType(APPLICATION_JSON_MEDIA_TYPE).build();
   private static final DataType JSON_SON_DATA_TYPE =
-      DataType.builder().type(JSON_SON.class).mediaType(APPLICATION_JSON_MEDIA_TYPE).build();
-  private static final DataType TEXT_DATA_TYPE = DataType.builder().type(TEXT.class).mediaType(TEXT_MEDIA_TYPE).build();
+      builder().type(JSON_SON.class).mediaType(APPLICATION_JSON_MEDIA_TYPE).build();
+  private static final DataType TEXT_DATA_TYPE = builder().type(TEXT.class).mediaType(TEXT_MEDIA_TYPE).build();
 
   private static final DataType[] dataTypes = {GENERIC_DATA_TYPE, GENERIC_TYPE_GENERIC_DATA_TYPE,
       GENERIC_MEDIA_TYPE_GENERIC_DATA_TYPE, JSON_PARENT_DATA_TYPE, JSON_SON_DATA_TYPE, TEXT_DATA_TYPE};
@@ -65,7 +70,7 @@ public class DataTypeMatchingTestCase extends AbstractMuleTestCase {
   @Test
   public void sameDataTypeMatchItSelf() throws Exception {
     for (int i = 0; i < dataTypes.length; i++) {
-      assertThat(DataType.match(dataTypes[i], dataTypes[i]), is(true));
+      assertThat(match(dataTypes[i], dataTypes[i], false), is(true));
     }
   }
 
@@ -113,48 +118,22 @@ public class DataTypeMatchingTestCase extends AbstractMuleTestCase {
   }
 
   @Test
-  public void thereShouldBeCompatibilityInInheritedDataTypes() throws Exception {
-    assertThat(DataType.anyCompatibilityExist(JSON_PARENT_DATA_TYPE, JSON_SON_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(JSON_SON_DATA_TYPE, JSON_PARENT_DATA_TYPE), is(true));
-  }
-
-  @Test
-  public void thereShouldExistCompatibilityBetweenGenericAndAnyOtherDataType() throws Exception {
-    assertThat(DataType.anyCompatibilityExist(GENERIC_DATA_TYPE, JSON_PARENT_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(JSON_PARENT_DATA_TYPE, GENERIC_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(GENERIC_DATA_TYPE, JSON_SON_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(JSON_SON_DATA_TYPE, GENERIC_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(GENERIC_DATA_TYPE, TEXT_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(TEXT_DATA_TYPE, GENERIC_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(GENERIC_DATA_TYPE, GENERIC_TYPE_GENERIC_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(GENERIC_TYPE_GENERIC_DATA_TYPE, GENERIC_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(GENERIC_DATA_TYPE, GENERIC_MEDIA_TYPE_GENERIC_DATA_TYPE), is(true));
-    assertThat(DataType.anyCompatibilityExist(GENERIC_MEDIA_TYPE_GENERIC_DATA_TYPE, GENERIC_DATA_TYPE), is(true));
-  }
-
-  @Test
   public void onlySameTypeAndMatchingMediaTypeShouldMatch() throws Exception {
     for (int i = 0; i < dataTypes.length; i++) {
       for (int j = 0; j < dataTypes.length; j++) {
         if (i == j) {
           continue;
         }
-        if (dataTypes[i].equals(GENERIC_DATA_TYPE) && dataTypes[j].equals(GENERIC_MEDIA_TYPE_GENERIC_DATA_TYPE) ||
-            dataTypes[i].equals(GENERIC_MEDIA_TYPE_GENERIC_DATA_TYPE) && dataTypes[j].equals(GENERIC_DATA_TYPE)) {
-          //These should match
-          continue;
-        }
-        try {
-          assertThat(dataTypes[i].matches(dataTypes[j]), is(false));
-          assertThat(dataTypes[j].matches(dataTypes[i]), is(false));
-        } catch (Error e) {
-
-        }
+        assertThat(dataTypes[i].matches(dataTypes[j], false), is(false));
       }
     }
-    DataType genericDataType = DataType.builder(TEXT_DATA_TYPE).mediaType(STAR_STAR_MEDIA_TYPE).build();
-    assertThat(genericDataType.matches(TEXT_DATA_TYPE), is(true));
-    assertThat(TEXT_DATA_TYPE.matches(genericDataType), is(true));
+    //Check another
+    DataType utf8DataType =
+        builder(TEXT_DATA_TYPE).mediaType(create(TEXT_MEDIA_TYPE.getPrimaryType(), TEXT_MEDIA_TYPE.getSubType(), UTF_8)).build();
+    DataType utf16DataType =
+        builder(TEXT_DATA_TYPE).mediaType(create(TEXT_MEDIA_TYPE.getPrimaryType(), TEXT_MEDIA_TYPE.getSubType(), UTF_16)).build();
+    assertThat(utf8DataType.matches(utf16DataType, false), is(true));
+    assertThat(utf16DataType.matches(utf8DataType, false), is(true));
   }
 
 

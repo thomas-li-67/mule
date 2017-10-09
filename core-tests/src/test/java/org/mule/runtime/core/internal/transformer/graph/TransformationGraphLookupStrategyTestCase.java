@@ -10,6 +10,9 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mule.runtime.api.metadata.DataType.JSON_STRING;
+import static org.mule.runtime.api.metadata.DataType.STRING;
+import static org.mule.runtime.api.metadata.DataType.TEXT_STRING;
 
 import org.mule.runtime.core.api.transformer.Converter;
 import org.mule.tck.size.SmallTest;
@@ -138,6 +141,41 @@ public class TransformationGraphLookupStrategyTestCase extends AbstractTransform
     assertThat(converters.size(), is(2));
     assertThat(converters.contains(utf8ToJson), is(true));
     assertThat(converters.contains(utf16ToJson), is(true));
+  }
+
+  @Test
+  public void explicitConverterShouldBeReturnedIfGenericRequestedWhenBothDataTypesExist() throws Exception {
+    Converter jsonToTextString = new MockConverterBuilder().named("jsonToTextString").from(JSON_STRING).to(TEXT_STRING).build();
+    Converter textStringToString = new MockConverterBuilder().named("textStringToString").from(TEXT_STRING).to(STRING).build();
+
+    graph.addConverter(jsonToTextString);
+    graph.addConverter(textStringToString);
+
+    List<Converter> converters = lookupStrategyTransformation.lookupConverters(JSON_STRING, STRING);
+    assertThat(converters.size(), is(1));
+    assertThat(converters.get(0).getName(), is("jsonToTextString"));
+  }
+
+  @Test
+  public void explicitConverterShouldBeReturnedEvenIfTargetDataTypeDoesNotExist() throws Exception {
+    Converter jsonToTextString = new MockConverterBuilder().named("jsonToTextString").from(JSON_STRING).to(TEXT_STRING).build();
+
+    graph.addConverter(jsonToTextString);
+
+    List<Converter> converters = lookupStrategyTransformation.lookupConverters(JSON_STRING, STRING);
+    assertThat(converters.size(), is(1));
+    assertThat(converters.get(0).getName(), is("jsonToTextString"));
+  }
+
+  @Test
+  public void explicitConverterShouldBeReturnedEvenIfTSourceDataTypeDoesNotExist() throws Exception {
+    Converter textStringToXML = new MockConverterBuilder().named("textStringToXML").from(TEXT_STRING).to(XML_DATA_TYPE).build();
+
+    graph.addConverter(textStringToXML);
+
+    List<Converter> converters = lookupStrategyTransformation.lookupConverters(STRING, XML_DATA_TYPE);
+    assertThat(converters.size(), is(1));
+    assertThat(converters.get(0).getName(), is("textStringToXML"));
   }
 
   private void assertContainsCompositeTransformer(List<Converter> converters, Converter... composedConverters) {

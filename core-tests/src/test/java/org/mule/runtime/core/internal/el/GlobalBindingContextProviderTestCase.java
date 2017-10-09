@@ -12,6 +12,7 @@ import static org.junit.Assert.assertThat;
 import static org.mule.runtime.api.el.BindingContext.builder;
 import static org.mule.runtime.api.metadata.DataType.NUMBER;
 import static org.mule.runtime.api.metadata.DataType.STRING;
+import static org.mule.runtime.api.metadata.DataType.areCompatible;
 import static org.mule.runtime.api.metadata.DataType.fromFunction;
 import static org.mule.runtime.api.metadata.DataType.fromType;
 import static org.mule.test.allure.AllureConstants.ExpressionLanguageFeature.EXPRESSION_LANGUAGE;
@@ -66,7 +67,7 @@ public class GlobalBindingContextProviderTestCase extends AbstractMuleContextTes
   public void function() {
     TypedValue result = muleContext.getExpressionManager().evaluate("repeat('oa', 3)");
     assertThat(result.getValue(), is("oaoaoa"));
-    assertThat(DataType.match(result.getDataType(), STRING), is(true));
+    assertThat(areCompatible(result.getDataType(), STRING), is(true));
   }
 
   private class TestGlobalBindingContextProvider implements GlobalBindingContextProvider {

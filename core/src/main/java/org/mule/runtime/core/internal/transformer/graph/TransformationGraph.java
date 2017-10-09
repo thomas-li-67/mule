@@ -40,17 +40,17 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     }
 
     DataType returnDataType = converter.getReturnDataType();
-    if (!containsVertexOrMatching(returnDataType)) {
+    if (!containsVertexOrMatching(returnDataType, false)) {
       addVertex(returnDataType);
     }
 
     for (DataType sourceDataType : converter.getSourceDataTypes()) {
-      if (!containsVertexOrMatching(sourceDataType)) {
+      if (!containsVertexOrMatching(sourceDataType, false)) {
         addVertex(sourceDataType);
       }
 
       //Use the compatible vertexes since we don't want to add multiple paths to the same transformation
-      addEdge(getActualMatchingVertex(sourceDataType).get(), getActualMatchingVertex(returnDataType).get(),
+      addEdge(getActualMatchingVertex(sourceDataType, false).get(), getActualMatchingVertex(returnDataType, false).get(),
               new TransformationEdge(converter));
     }
 
@@ -69,8 +69,8 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     DataType returnDataType = converter.getReturnDataType();
 
     for (DataType sourceDataType : converter.getSourceDataTypes()) {
-      Optional<DataType> actualSourceVertex = getActualMatchingVertex(sourceDataType);
-      Optional<DataType> actualReturnVertex = getActualMatchingVertex(returnDataType);
+      Optional<DataType> actualSourceVertex = getActualMatchingVertex(sourceDataType, false);
+      Optional<DataType> actualReturnVertex = getActualMatchingVertex(returnDataType, false);
       if (!actualSourceVertex.isPresent() || !actualReturnVertex.isPresent()) {
         return;
       }
@@ -98,16 +98,19 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     registeredConverters.remove(converter);
   }
 
+
+
   //Looks for the actual matching vertex inside the graph
-  public Optional<DataType> getActualMatchingVertex(DataType vertex) {
+  public Optional<DataType> getActualMatchingVertex(DataType vertex, boolean matchIfWildcard) {
     //Use the parent's method to check for the actual vertex
     if (super.containsVertex(vertex)) {
       return Optional.of(vertex);
     }
-    return vertexSet().stream().filter((graphVertex) -> DataType.match(graphVertex, vertex)).findFirst();
+    return vertexSet().stream().filter((matchingVertex) -> vertex.matches(matchingVertex, matchIfWildcard)).findFirst();
   }
 
-  public boolean containsVertexOrMatching(DataType vertex) {
-    return getActualMatchingVertex(vertex).isPresent();
+  public boolean containsVertexOrMatching(DataType vertex, boolean matchIfWildcard) {
+    return getActualMatchingVertex(vertex, matchIfWildcard).isPresent();
   }
+
 }

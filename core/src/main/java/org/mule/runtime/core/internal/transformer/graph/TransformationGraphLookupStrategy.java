@@ -40,12 +40,12 @@ public class TransformationGraphLookupStrategy {
    */
   public List<Converter> lookupConverters(DataType source, DataType target) {
     List<Converter> converters = new LinkedList<>();
-    if (!graph.containsVertexOrMatching(source)) {
+    if (!graph.containsVertexOrMatching(source, true)) {
       return converters;
     }
 
     // Checks if there is a converter with the specified output data type
-    if (!graph.containsVertexOrMatching(target)) {
+    if (!graph.containsVertexOrMatching(target, true)) {
       return converters;
     }
 
@@ -54,8 +54,8 @@ public class TransformationGraphLookupStrategy {
     //At this point we already know that both vertexes(or matching ones) are in the graph, so we can be sure that
     //the optionals will not be empty
 
-    DataType sourceVertex = graph.getActualMatchingVertex(source).get();
-    DataType targetVertex = graph.getActualMatchingVertex(target).get();
+    DataType sourceVertex = graph.getActualMatchingVertex(source, true).get();
+    DataType targetVertex = graph.getActualMatchingVertex(target, true).get();
 
     List<List<TransformationEdge>> transformationPaths = findTransformationPaths(sourceVertex, targetVertex, visited);
 
@@ -99,7 +99,7 @@ public class TransformationGraphLookupStrategy {
       for (TransformationEdge transformationEdge : transformationEdges) {
         DataType edgeTarget = graph.getEdgeTarget(transformationEdge);
 
-        if (edgeTarget.isCompatibleWith(target)) {
+        if (target.matches(edgeTarget, true)) {
           LinkedList<TransformationEdge> transformationEdges1 = new LinkedList<>();
           transformationEdges1.add(transformationEdge);
           validTransformationEdges.add(transformationEdges1);
@@ -119,4 +119,5 @@ public class TransformationGraphLookupStrategy {
 
     return validTransformationEdges;
   }
+
 }

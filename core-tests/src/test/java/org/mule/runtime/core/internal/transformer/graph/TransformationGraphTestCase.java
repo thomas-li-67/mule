@@ -12,6 +12,8 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.mule.runtime.api.metadata.DataType.STRING;
+import static org.mule.runtime.api.metadata.DataType.TEXT_STRING;
 import org.mule.apache.xerces.util.XML11Char;
 import org.mule.runtime.core.api.transformer.Converter;
 import org.mule.runtime.core.api.transformer.Transformer;
@@ -261,6 +263,18 @@ public class TransformationGraphTestCase extends AbstractTransformationGraphTest
     assertThat(graph.inDegreeOf(XML_DATA_TYPE), is(1));
     assertThat(graph.outDegreeOf(UTF_8_DATA_TYPE), is(2));
 
+  }
+
+  @Test
+  public void addingNonGenericMediaTypeConverterAddsVertex() throws Exception {
+    Converter stringToJson = new MockConverterBuilder().from(STRING).to(JSON_DATA_TYPE).build();
+    Converter textStringToXml = new MockConverterBuilder().from(TEXT_STRING).to(XML_DATA_TYPE).build();
+
+    TransformationGraph graph = new TransformationGraph();
+    graph.addConverter(stringToJson);
+    graph.addConverter(textStringToXml);
+
+    assertThat(graph.vertexSet().size(), is(4));
   }
 
   private void assertContainsTransformer(Set<TransformationEdge> transformationEdges, Transformer transformer) {

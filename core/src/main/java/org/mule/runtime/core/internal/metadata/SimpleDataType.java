@@ -102,11 +102,12 @@ public class SimpleDataType implements DataType {
       return false;
     }
 
-    return mediaTypesMatch(dataType);
+    return MediaType.ANY.matches(getMediaType()) || MediaType.ANY.matches(dataType.getMediaType())
+        || mediaTypesMatch(dataType);
   }
 
   @Override
-  public boolean matches(DataType other) {
+  public boolean matches(DataType other, boolean matchIfWildcard) {
 
     if (this.equals(other)) {
       return true;
@@ -116,22 +117,23 @@ public class SimpleDataType implements DataType {
       return false;
     }
 
+    if (matchIfWildcard) {
+      if (MediaType.ANY.matches(getMediaType())) {
+        return true;
+      }
+    }
+
     return mediaTypesMatch(other);
   }
 
   private boolean mediaTypesMatch(DataType other) {
-
-    //ANY_MIME_TYPE should match with null also
-    if (MediaType.ANY.matches(this.getMediaType()) || MediaType.ANY.matches(other.getMediaType())) {
-      return true; //If any mediaType is ANY, they match
-    }
 
     if (this.getMediaType() == null && other.getMediaType() != null) {
       return false; //This mediaType is null and the other not null different from ANY
     }
 
     if (this.getMediaType() != null && other.getMediaType() == null) {
-      return false; //This mediaType is not null, different from ANY and the other is null.
+      return false; //This mediaType is not null, and the other is null.
     }
 
     return this.getMediaType().matches(other.getMediaType());

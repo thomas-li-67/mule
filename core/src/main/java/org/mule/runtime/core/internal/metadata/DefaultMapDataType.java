@@ -46,18 +46,18 @@ public class DefaultMapDataType extends SimpleDataType implements MapDataType {
   }
 
   @Override
-  public boolean matches(DataType other) {
+  public boolean matches(DataType other, boolean allowWildcard) {
     if (!(other instanceof DefaultMapDataType)) {
       return false;
     }
 
-    if (!super.matches(other)) {
+    if (!super.matches(other, allowWildcard)) {
       return false;
     }
     DefaultMapDataType that = (DefaultMapDataType) other;
 
-    return getKeyDataType().matches(that.getKeyDataType())
-        && getValueDataType().matches(that.getValueDataType());
+    return getKeyDataType().matches(that.getKeyDataType(), allowWildcard)
+        && getValueDataType().matches(that.getValueDataType(), allowWildcard);
   }
 
   @Override
