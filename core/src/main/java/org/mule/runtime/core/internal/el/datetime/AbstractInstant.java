@@ -126,7 +126,8 @@ public abstract class AbstractInstant implements Instant {
 
   @Override
   public int hashCode() {
-    return hash(calendar, locale);
+    return hash(calendar.getTimeInMillis(), calendar.getFirstDayOfWeek(), calendar.getMinimalDaysInFirstWeek(),
+                getTimeZoneOffset());
   }
 
   @Override

@@ -129,11 +129,11 @@ public class SimpleDataType implements DataType {
   private boolean mediaTypesMatch(DataType other) {
 
     if (this.getMediaType() == null && other.getMediaType() != null) {
-      return false; //This mediaType is null and the other not null different from ANY
+      return false;
     }
 
     if (this.getMediaType() != null && other.getMediaType() == null) {
-      return false; //This mediaType is not null, and the other is null.
+      return false;
     }
 
     return this.getMediaType().matches(other.getMediaType());

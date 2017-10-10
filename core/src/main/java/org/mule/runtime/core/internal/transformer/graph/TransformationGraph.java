@@ -101,7 +101,7 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
 
 
   //Looks for the actual matching vertex inside the graph
-  public Optional<DataType> getActualMatchingVertex(DataType vertex, boolean matchIfWildcard) {
+  Optional<DataType> getActualMatchingVertex(DataType vertex, boolean matchIfWildcard) {
     //Use the parent's method to check for the actual vertex
     if (super.containsVertex(vertex)) {
       return Optional.of(vertex);
@@ -109,7 +109,7 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     return vertexSet().stream().filter((matchingVertex) -> vertex.matches(matchingVertex, matchIfWildcard)).findFirst();
   }
 
-  public boolean containsVertexOrMatching(DataType vertex, boolean matchIfWildcard) {
+  boolean containsVertexOrMatching(DataType vertex, boolean matchIfWildcard) {
     return getActualMatchingVertex(vertex, matchIfWildcard).isPresent();
   }
 
