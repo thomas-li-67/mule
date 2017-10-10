@@ -6,15 +6,13 @@
  */
 package org.mule.runtime.core.internal.transformer.type;
 
-import static java.nio.charset.StandardCharsets.UTF_16;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.mule.runtime.api.metadata.DataType.builder;
-import static org.mule.runtime.api.metadata.DataType.match;
-import static org.mule.runtime.api.metadata.MediaType.create;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.charset.StandardCharsets.UTF_16;
 import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.tck.junit4.AbstractMuleTestCase;
@@ -68,13 +66,6 @@ public class DataTypeMatchingTestCase extends AbstractMuleTestCase {
   }
 
   @Test
-  public void sameDataTypeMatchItSelf() throws Exception {
-    for (int i = 0; i < dataTypes.length; i++) {
-      assertThat(match(dataTypes[i], dataTypes[i], false), is(true));
-    }
-  }
-
-  @Test
   public void allDataTypesAreDifferent() throws Exception {
     for (int i = 0; i < dataTypes.length; i++) {
       for (int j = 0; j < dataTypes.length; j++) {
@@ -118,24 +109,17 @@ public class DataTypeMatchingTestCase extends AbstractMuleTestCase {
   }
 
   @Test
-  public void onlySameTypeAndMatchingMediaTypeShouldMatch() throws Exception {
-    for (int i = 0; i < dataTypes.length; i++) {
-      for (int j = 0; j < dataTypes.length; j++) {
-        if (i == j) {
-          continue;
-        }
-        assertThat(dataTypes[i].matches(dataTypes[j], false), is(false));
-      }
-    }
-    //Check another
-    DataType utf8DataType =
-        builder(TEXT_DATA_TYPE).mediaType(create(TEXT_MEDIA_TYPE.getPrimaryType(), TEXT_MEDIA_TYPE.getSubType(), UTF_8)).build();
-    DataType utf16DataType =
-        builder(TEXT_DATA_TYPE).mediaType(create(TEXT_MEDIA_TYPE.getPrimaryType(), TEXT_MEDIA_TYPE.getSubType(), UTF_16)).build();
-    assertThat(utf8DataType.matches(utf16DataType, false), is(true));
-    assertThat(utf16DataType.matches(utf8DataType, false), is(true));
+  public void ifCharsetItsNotSpecifiedItShouldBeCompatibleWithAny() throws Exception {
+    DataType jsonWithCharset = builder(JSON_PARENT_DATA_TYPE).charset(UTF_8).build();
+    assertThat(JSON_PARENT_DATA_TYPE.isCompatibleWith(jsonWithCharset), is(true));
+    assertThat(jsonWithCharset.isCompatibleWith(JSON_PARENT_DATA_TYPE), is(false));
   }
 
-
-
+  @Test
+  public void differentCharsetsShouldNotBeCompatible() throws Exception {
+    DataType jsonUtf8 = builder(JSON_PARENT_DATA_TYPE).charset(UTF_8).build();
+    DataType jsonUtf16 = builder(JSON_PARENT_DATA_TYPE).charset(UTF_16).build();
+    assertThat(jsonUtf8.isCompatibleWith(jsonUtf16), is(false));
+    assertThat(jsonUtf16.isCompatibleWith(jsonUtf8), is(false));
+  }
 }

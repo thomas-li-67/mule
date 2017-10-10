@@ -51,20 +51,6 @@ public class DefaultCollectionDataType extends SimpleDataType implements Collect
   }
 
   @Override
-  public boolean matches(DataType other, boolean allowWildcard) {
-    if (!(other instanceof DefaultCollectionDataType)) {
-      return false;
-    }
-
-    if (!super.matches(other, allowWildcard)) {
-      return false;
-    }
-    DefaultCollectionDataType that = (DefaultCollectionDataType) other;
-
-    return getItemDataType().matches(that.getItemDataType(), allowWildcard);
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;

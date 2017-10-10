@@ -13,7 +13,9 @@ import static org.hamcrest.Matchers.is;
 import static org.mule.runtime.api.metadata.DataType.JSON_STRING;
 import static org.mule.runtime.api.metadata.DataType.STRING;
 import static org.mule.runtime.api.metadata.DataType.TEXT_STRING;
+import static org.mule.runtime.api.metadata.DataType.builder;
 
+import org.mule.runtime.api.metadata.DataType;
 import org.mule.runtime.core.api.transformer.Converter;
 import org.mule.tck.size.SmallTest;
 import org.mule.runtime.core.privileged.transformer.CompositeConverter;
@@ -117,30 +119,19 @@ public class TransformationGraphLookupStrategyTestCase extends AbstractTransform
   }
 
   @Test
-  public void gettingConverterFromMatchingDataTypeShouldWork() throws Exception {
+  public void mediaTypeCharsetNotCheckedIfNotSpecified() throws Exception {
     Converter utf8ToJson = new MockConverterBuilder().from(UTF_8_DATA_TYPE).to(JSON_DATA_TYPE).build();
 
     graph.addConverter(utf8ToJson);
 
     List<Converter> converters = lookupStrategyTransformation.lookupConverters(UTF_16_DATA_TYPE, JSON_DATA_TYPE);
+    //Should not find anything since the charset is specified
+    assertThat(converters.size(), is(0));
 
+    converters =
+        lookupStrategyTransformation.lookupConverters(builder(UTF_16_DATA_TYPE).charset((String) null).build(), JSON_DATA_TYPE);
     assertThat(converters.size(), is(1));
     assertThat(converters.contains(utf8ToJson), is(true));
-  }
-
-  @Test
-  public void convertersWithMatchingDataTypesAreAllReturned() throws Exception {
-    Converter utf8ToJson = new MockConverterBuilder().from(UTF_8_DATA_TYPE).to(JSON_DATA_TYPE).build();
-    Converter utf16ToJson = new MockConverterBuilder().from(UTF_16_DATA_TYPE).to(JSON_DATA_TYPE).build();
-
-    graph.addConverter(utf8ToJson);
-    graph.addConverter(utf16ToJson);
-
-    List<Converter> converters = lookupStrategyTransformation.lookupConverters(UTF_16_DATA_TYPE, JSON_DATA_TYPE);
-
-    assertThat(converters.size(), is(2));
-    assertThat(converters.contains(utf8ToJson), is(true));
-    assertThat(converters.contains(utf16ToJson), is(true));
   }
 
   @Test
@@ -157,7 +148,7 @@ public class TransformationGraphLookupStrategyTestCase extends AbstractTransform
   }
 
   @Test
-  public void explicitConverterShouldBeReturnedEvenIfTargetDataTypeDoesNotExist() throws Exception {
+  public void compatibleConverterShouldBeReturnedEvenIfTargetDataTypeDoesNotExist() throws Exception {
     Converter jsonToTextString = new MockConverterBuilder().named("jsonToTextString").from(JSON_STRING).to(TEXT_STRING).build();
 
     graph.addConverter(jsonToTextString);
@@ -168,7 +159,7 @@ public class TransformationGraphLookupStrategyTestCase extends AbstractTransform
   }
 
   @Test
-  public void explicitConverterShouldBeReturnedEvenIfTSourceDataTypeDoesNotExist() throws Exception {
+  public void compatibleConverterShouldBeReturnedEvenIfTSourceDataTypeDoesNotExist() throws Exception {
     Converter textStringToXML = new MockConverterBuilder().named("textStringToXML").from(TEXT_STRING).to(XML_DATA_TYPE).build();
 
     graph.addConverter(textStringToXML);

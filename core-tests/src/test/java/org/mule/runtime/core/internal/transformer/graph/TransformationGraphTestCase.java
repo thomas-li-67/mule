@@ -245,38 +245,6 @@ public class TransformationGraphTestCase extends AbstractTransformationGraphTest
     assertFalse(graph.containsEdge(JSON_DATA_TYPE, INPUT_STREAM_DATA_TYPE));
   }
 
-  @Test
-  public void addingConverterWithMatchingDataTypeShouldNotCreateAVertex() throws Exception {
-    Converter utf8ToJson = new MockConverterBuilder().from(UTF_8_DATA_TYPE).to(JSON_DATA_TYPE).build();
-    Converter utf16ToXML = new MockConverterBuilder().from(UTF_16_DATA_TYPE).to(XML_DATA_TYPE).build();
-
-    TransformationGraph graph = new TransformationGraph();
-    graph.addConverter(utf8ToJson);
-    graph.addConverter(utf16ToXML);
-
-    assertThat(graph.edgeSet().size(), is(2));
-
-    assertThat(graph.containsVertex(UTF_16_DATA_TYPE), is(false));
-
-    assertThat(graph.inDegreeOf(UTF_8_DATA_TYPE), is(0));
-    assertThat(graph.inDegreeOf(JSON_DATA_TYPE), is(1));
-    assertThat(graph.inDegreeOf(XML_DATA_TYPE), is(1));
-    assertThat(graph.outDegreeOf(UTF_8_DATA_TYPE), is(2));
-
-  }
-
-  @Test
-  public void addingNonGenericMediaTypeConverterAddsVertex() throws Exception {
-    Converter stringToJson = new MockConverterBuilder().from(STRING).to(JSON_DATA_TYPE).build();
-    Converter textStringToXml = new MockConverterBuilder().from(TEXT_STRING).to(XML_DATA_TYPE).build();
-
-    TransformationGraph graph = new TransformationGraph();
-    graph.addConverter(stringToJson);
-    graph.addConverter(textStringToXml);
-
-    assertThat(graph.vertexSet().size(), is(4));
-  }
-
   private void assertContainsTransformer(Set<TransformationEdge> transformationEdges, Transformer transformer) {
     for (TransformationEdge edge : transformationEdges) {
       if (edge.getConverter() == transformer) {

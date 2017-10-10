@@ -40,18 +40,16 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     }
 
     DataType returnDataType = converter.getReturnDataType();
-    if (!containsVertexOrMatching(returnDataType, false)) {
+    if (!containsVertex(returnDataType)) {
       addVertex(returnDataType);
     }
 
     for (DataType sourceDataType : converter.getSourceDataTypes()) {
-      if (!containsVertexOrMatching(sourceDataType, false)) {
+      if (!containsVertex(sourceDataType)) {
         addVertex(sourceDataType);
       }
 
-      //Use the compatible vertexes since we don't want to add multiple paths to the same transformation
-      addEdge(getActualMatchingVertex(sourceDataType, false).get(), getActualMatchingVertex(returnDataType, false).get(),
-              new TransformationEdge(converter));
+      addEdge(sourceDataType, returnDataType, new TransformationEdge(converter));
     }
 
     registeredConverters.add(converter);
@@ -69,12 +67,8 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
     DataType returnDataType = converter.getReturnDataType();
 
     for (DataType sourceDataType : converter.getSourceDataTypes()) {
-      Optional<DataType> actualSourceVertex = getActualMatchingVertex(sourceDataType, false);
-      Optional<DataType> actualReturnVertex = getActualMatchingVertex(returnDataType, false);
-      if (!actualSourceVertex.isPresent() || !actualReturnVertex.isPresent()) {
-        return;
-      }
-      Set<TransformationEdge> allEdges = getAllEdges(actualSourceVertex.get(), actualReturnVertex.get());
+
+      Set<TransformationEdge> allEdges = getAllEdges(sourceDataType, returnDataType);
 
       for (TransformationEdge edge : allEdges) {
 
@@ -100,17 +94,17 @@ public class TransformationGraph extends DirectedMultigraph<DataType, Transforma
 
 
 
-  //Looks for the actual matching vertex inside the graph
-  Optional<DataType> getActualMatchingVertex(DataType vertex, boolean matchIfWildcard) {
-    //Use the parent's method to check for the actual vertex
+  //Looks for the actual compatible vertex inside the graph
+  Optional<DataType> getActualCompatibleVertex(DataType vertex) {
+    //Use the parent's method to check if the actual vertex exists
     if (super.containsVertex(vertex)) {
       return Optional.of(vertex);
     }
-    return vertexSet().stream().filter((matchingVertex) -> vertex.matches(matchingVertex, matchIfWildcard)).findFirst();
+    return vertexSet().stream().filter(vertex::isCompatibleWith).findFirst();
   }
 
-  boolean containsVertexOrMatching(DataType vertex, boolean matchIfWildcard) {
-    return getActualMatchingVertex(vertex, matchIfWildcard).isPresent();
+  boolean containsVertexOrCompatible(DataType vertex) {
+    return getActualCompatibleVertex(vertex).isPresent();
   }
 
 }

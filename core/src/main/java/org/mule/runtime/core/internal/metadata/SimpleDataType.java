@@ -102,28 +102,7 @@ public class SimpleDataType implements DataType {
       return false;
     }
 
-    return MediaType.ANY.matches(getMediaType()) || MediaType.ANY.matches(dataType.getMediaType())
-        || mediaTypesMatch(dataType);
-  }
-
-  @Override
-  public boolean matches(DataType other, boolean matchIfWildcard) {
-
-    if (this.equals(other)) {
-      return true;
-    }
-
-    if (!this.getType().equals(other.getType())) {
-      return false;
-    }
-
-    if (matchIfWildcard) {
-      if (MediaType.ANY.matches(getMediaType())) {
-        return true;
-      }
-    }
-
-    return mediaTypesMatch(other);
+    return MediaType.ANY.matches(getMediaType()) || mediaTypesMatch(dataType);
   }
 
   private boolean mediaTypesMatch(DataType other) {
@@ -136,7 +115,11 @@ public class SimpleDataType implements DataType {
       return false;
     }
 
-    return this.getMediaType().matches(other.getMediaType());
+    if (!this.getMediaType().getCharset().isPresent()) {
+      return this.getMediaType().matches(other.getMediaType());
+    } else {
+      return this.getMediaType().equals(other.getMediaType());
+    }
 
   }
 
